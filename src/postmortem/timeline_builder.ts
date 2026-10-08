@@ -28,7 +28,9 @@ export class TimelineBuilder {
     return transitions.map((t) => {
       const currTime = new Date(t.timestamp).getTime();
       const diffSec = Math.max(0, Math.floor((currTime - firstTime) / 1000));
-      const mins = Math.floor(diffSec / 60).toString().padStart(2, "0");
+      const mins = Math.floor(diffSec / 60)
+        .toString()
+        .padStart(2, "0");
       const secs = (diffSec % 60).toString().padStart(2, "0");
 
       return {

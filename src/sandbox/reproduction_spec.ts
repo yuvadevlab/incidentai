@@ -24,7 +24,7 @@ export class ReproductionSpecGenerator {
    */
   async generateReproductionSpec(
     report: DiagnosticReport,
-    sandboxDir: string
+    sandboxDir: string,
   ): Promise<ReproductionSpec> {
     const specFile = path.resolve(sandboxDir, `reproduce_${report.incidentId}.spec.ts`);
 

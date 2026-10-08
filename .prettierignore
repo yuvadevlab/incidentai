@@ -1,0 +1,5 @@
+node_modules
+dist
+sandboxes
+postmortems
+pnpm-lock.yaml

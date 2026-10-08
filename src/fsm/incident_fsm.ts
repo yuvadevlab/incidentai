@@ -77,7 +77,7 @@ export class IncidentFSM {
     // Guard clause: Disallow invalid or out-of-order state transitions
     if (!valid) {
       throw new Error(
-        `[IncidentFSM] Invalid state transition rejected: cannot transition from ${this.currentState} to ${target}`
+        `[IncidentFSM] Invalid state transition rejected: cannot transition from ${this.currentState} to ${target}`,
       );
     }
 

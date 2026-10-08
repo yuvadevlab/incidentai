@@ -16,7 +16,9 @@ const program = new Command();
 
 program
   .name("incidentai")
-  .description("IncidentAI — Autonomous AI Site Reliability Engineer & Self-Healing Incident Commander")
+  .description(
+    "IncidentAI — Autonomous AI Site Reliability Engineer & Self-Healing Incident Commander",
+  )
   .version("1.0.0");
 
 program
@@ -52,7 +54,7 @@ program
     const alert = await listener.triggerSimulatedAlert(
       options.scenario,
       options.service,
-      `Fatal error: ${options.scenario} in ${options.service}\n    at processQuery (/Repos/${options.service}/src/db.ts:42:15)`
+      `Fatal error: ${options.scenario} in ${options.service}\n    at processQuery (/Repos/${options.service}/src/db.ts:42:15)`,
     );
 
     await orchestrator.resolveIncident(alert);

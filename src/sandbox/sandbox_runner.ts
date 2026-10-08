@@ -74,7 +74,7 @@ export class SandboxRunner {
       child.on("close", (code) => {
         clearTimeout(timer);
         const durationMs = Math.round(performance.now() - start);
-        const exitCode = killed ? 124 : code ?? 1;
+        const exitCode = killed ? 124 : (code ?? 1);
 
         resolve({
           exitCode,

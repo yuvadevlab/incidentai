@@ -6,7 +6,8 @@
 import type { IncidentAlert, StackFrame } from "../types/index.js";
 
 // Regex matching standard V8/Node.js stack trace line: at [func] ([file]:[line]:[col])
-const STACK_FRAME_REGEX = /^\s*at\s+(?:(?<fn>[a-zA-Z0-9_$.<>]+)\s+\()?(?<file>[^():\n]+):(?<line>\d+):(?<col>\d+)\)?$/;
+const STACK_FRAME_REGEX =
+  /^\s*at\s+(?:(?<fn>[a-zA-Z0-9_$.<>]+)\s+\()?(?<file>[^():\n]+):(?<line>\d+):(?<col>\d+)\)?$/;
 
 /**
  * Correlates incident logs across distributed telemetry traces.
@@ -20,7 +21,8 @@ export class LogCorrelator {
    * @param telemetryApiUrl DevLab Telemetry base URL
    */
   constructor(telemetryApiUrl?: string) {
-    this.telemetryApiUrl = telemetryApiUrl || process.env.TELEMETRY_API_URL || "http://localhost:3020";
+    this.telemetryApiUrl =
+      telemetryApiUrl || process.env.TELEMETRY_API_URL || "http://localhost:3020";
   }
 
   /**
@@ -33,15 +35,24 @@ export class LogCorrelator {
     semanticSummary: string;
     stackFrames: StackFrame[];
   }> {
-    const correlatedLogs: Array<{ id: string; service: string; message: string; timestamp: string }> = [];
+    const correlatedLogs: Array<{
+      id: string;
+      service: string;
+      message: string;
+      timestamp: string;
+    }> = [];
     let semanticSummary = alert.message;
 
     // 1. Fetch trace-correlated logs if traceId exists
     if (alert.traceId) {
       try {
-        const res = await fetch(`${this.telemetryApiUrl}/api/v1/logs?traceId=${encodeURIComponent(alert.traceId)}`);
+        const res = await fetch(
+          `${this.telemetryApiUrl}/api/v1/logs?traceId=${encodeURIComponent(alert.traceId)}`,
+        );
         if (res.ok) {
-          const data = (await res.json()) as { logs?: Array<{ id: string; service: string; message: string; timestamp: string }> };
+          const data = (await res.json()) as {
+            logs?: Array<{ id: string; service: string; message: string; timestamp: string }>;
+          };
           if (data.logs && data.logs.length > 0) {
             correlatedLogs.push(...data.logs);
           }
@@ -59,7 +70,9 @@ export class LogCorrelator {
         body: JSON.stringify({ query: alert.message, limit: 3 }),
       });
       if (ragRes.ok) {
-        const ragData = (await ragRes.json()) as { matches?: Array<{ summary: string; similarity: number }> };
+        const ragData = (await ragRes.json()) as {
+          matches?: Array<{ summary: string; similarity: number }>;
+        };
         if (ragData.matches && ragData.matches.length > 0 && ragData.matches[0]) {
           semanticSummary = `${alert.message} (Historical Match: ${ragData.matches[0].summary})`;
         }

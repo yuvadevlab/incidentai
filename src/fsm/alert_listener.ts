@@ -23,7 +23,8 @@ export class AlertListener {
    * @param telemetryApiUrl DevLab Telemetry service base URL
    */
   constructor(telemetryApiUrl?: string) {
-    this.telemetryApiUrl = telemetryApiUrl || process.env.TELEMETRY_API_URL || "http://localhost:3020";
+    this.telemetryApiUrl =
+      telemetryApiUrl || process.env.TELEMETRY_API_URL || "http://localhost:3020";
   }
 
   /**
@@ -57,7 +58,7 @@ export class AlertListener {
   async triggerSimulatedAlert(
     scenario: string,
     service: string = "finai",
-    message: string = "Connection to PostgreSQL primary node timed out after 5000ms"
+    message: string = "Connection to PostgreSQL primary node timed out after 5000ms",
   ): Promise<IncidentAlert> {
     const alert: IncidentAlert = {
       id: `incident-${Date.now()}`,
@@ -106,7 +107,9 @@ export class AlertListener {
       const res = await fetch(`${this.telemetryApiUrl}/api/v1/logs?level=error&limit=5`);
       if (!res.ok) return;
 
-      const data = (await res.json()) as { logs?: Array<{ id: string; service: string; message: string; trace_id?: string }> };
+      const data = (await res.json()) as {
+        logs?: Array<{ id: string; service: string; message: string; trace_id?: string }>;
+      };
       const errorLogs = data.logs || [];
 
       if (errorLogs.length === 0) return;

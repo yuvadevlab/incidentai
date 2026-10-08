@@ -28,7 +28,7 @@ export class TestOracle {
    */
   async verifyReproduction(
     testCommand: string,
-    options?: SandboxOptions
+    options?: SandboxOptions,
   ): Promise<{ reproduced: boolean; result: SandboxResult }> {
     const result = await this.runner.execute(testCommand, options);
     // In reproduction, a non-zero exit code or explicit failure indicates the bug exists
@@ -44,7 +44,7 @@ export class TestOracle {
    */
   async verifyPatch(
     testCommand: string,
-    options?: SandboxOptions
+    options?: SandboxOptions,
   ): Promise<{ verified: boolean; result: SandboxResult }> {
     const result = await this.runner.execute(testCommand, options);
     // In verification, exitCode === 0 indicates clean fix with zero regressions

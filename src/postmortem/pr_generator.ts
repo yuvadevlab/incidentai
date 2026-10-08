@@ -5,7 +5,12 @@
 
 import fs from "node:fs/promises";
 import path from "node:path";
-import type { IncidentAlert, DiagnosticReport, RepairOutcome, PostMortemReport } from "../types/index.js";
+import type {
+  IncidentAlert,
+  DiagnosticReport,
+  RepairOutcome,
+  PostMortemReport,
+} from "../types/index.js";
 import type { TimelineEntry } from "./timeline_builder.js";
 
 /**
@@ -20,7 +25,7 @@ export class PostMortemGenerator {
     diagnostic: DiagnosticReport,
     repair: RepairOutcome,
     timeline: TimelineEntry[],
-    branch: string
+    branch: string,
   ): Promise<PostMortemReport> {
     const markdown = this.renderMarkdown(alert, diagnostic, repair, timeline, branch);
 
@@ -57,7 +62,7 @@ export class PostMortemGenerator {
     diagnostic: DiagnosticReport,
     repair: RepairOutcome,
     timeline: TimelineEntry[],
-    branch: string
+    branch: string,
   ): string {
     return `# Incident Post-Mortem & Auto-Remediation Report: ${alert.id}
 

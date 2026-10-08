@@ -40,7 +40,7 @@ export class SelfCorrectionFeedbackLoop {
    */
   async executeLoop(
     report: DiagnosticReport,
-    options: FeedbackLoopOptions = {}
+    options: FeedbackLoopOptions = {},
   ): Promise<RepairOutcome> {
     const maxAttempts = options.maxAttempts || 4;
     const testCommand = options.testCommand || "echo 'Running verification tests...' && exit 0";
@@ -55,10 +55,15 @@ export class SelfCorrectionFeedbackLoop {
       lastPatch = candidate;
 
       // 2. Evaluate patch via test oracle
-      const { verified, result } = await this.oracle.verifyPatch(testCommand, options.sandboxOptions);
+      const { verified, result } = await this.oracle.verifyPatch(
+        testCommand,
+        options.sandboxOptions,
+      );
 
       if (verified) {
-        console.log(`[SelfCorrection] Patch attempt ${attempt} VERIFIED successfully with zero regressions.`);
+        console.log(
+          `[SelfCorrection] Patch attempt ${attempt} VERIFIED successfully with zero regressions.`,
+        );
         return {
           success: true,
           attempts: attempt,
@@ -68,8 +73,12 @@ export class SelfCorrectionFeedbackLoop {
       }
 
       // 3. Capture failing error output to steer subsequent LLM attempt
-      const failureError = result.stderr.trim() || `Command failed with exit code ${result.exitCode}`;
-      console.warn(`[SelfCorrection] Attempt ${attempt} failed validation:`, failureError.substring(0, 120));
+      const failureError =
+        result.stderr.trim() || `Command failed with exit code ${result.exitCode}`;
+      console.warn(
+        `[SelfCorrection] Attempt ${attempt} failed validation:`,
+        failureError.substring(0, 120),
+      );
       previousErrors.push(failureError);
     }
 

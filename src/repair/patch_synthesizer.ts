@@ -33,7 +33,7 @@ export class PatchSynthesizer {
   async synthesizePatch(
     report: DiagnosticReport,
     attempt: number,
-    previousErrors: string[] = []
+    previousErrors: string[] = [],
   ): Promise<PatchCandidate> {
     const feedbackBlock =
       previousErrors.length > 0

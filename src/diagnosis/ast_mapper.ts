@@ -26,10 +26,7 @@ export class AstMapper {
    * @param baseDirs Optional list of repository root paths to search
    */
   constructor(baseDirs?: string[]) {
-    this.baseDirs = baseDirs || [
-      path.resolve(process.cwd(), ".."),
-      process.cwd(),
-    ];
+    this.baseDirs = baseDirs || [path.resolve(process.cwd(), ".."), process.cwd()];
   }
 
   /**
@@ -40,7 +37,7 @@ export class AstMapper {
    */
   async mapFrameToSource(
     frames: StackFrame[],
-    fallbackFile?: string
+    fallbackFile?: string,
   ): Promise<MappedSourceContext> {
     const primaryFrame = frames[0];
     const candidateFile = primaryFrame ? primaryFrame.file : fallbackFile || "src/index.ts";

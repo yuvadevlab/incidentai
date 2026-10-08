@@ -12,7 +12,16 @@
     "build": "tsc",
     "start": "node dist/cli.js",
     "typecheck": "tsc --noEmit",
-    "demo": "tsx src/cli.ts demo"
+    "demo": "tsx src/cli.ts demo",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "prettier --write"
+    ],
+    "*.{json,md,yml,yaml}": [
+      "prettier --write"
+    ]
   },
   "dependencies": {
     "@yuva-devlab/logger": "link:../devlab-shared/packages/logger",
@@ -21,7 +30,13 @@
     "zod": "^3.24.2"
   },
   "devDependencies": {
+    "@commitlint/cli": "^19.7.1",
+    "@commitlint/config-conventional": "^19.7.1",
+    "@commitlint/types": "^19.5.0",
     "@types/node": "^24.10.1",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.4.3",
+    "prettier": "^3.5.3",
     "tsx": "^4.19.3",
     "typescript": "^5.8.2"
   }

@@ -30,7 +30,7 @@ export class HypothesisEngine {
   async generateHypotheses(
     alert: IncidentAlert,
     sourceContext: MappedSourceContext,
-    stackFrames: StackFrame[]
+    stackFrames: StackFrame[],
   ): Promise<DiagnosticReport> {
     const prompt = `You are IncidentAI, an autonomous principal SRE diagnosing a production incident.
 INCIDENT: ${alert.title}

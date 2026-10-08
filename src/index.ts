@@ -46,17 +46,27 @@ export class IncidentAIOrchestrator {
     fsm.transitionTo(IncidentState.ALERT_DETECTED, `Alert received: ${alert.title}`);
 
     // STAGE 1: DIAGNOSIS & AST MAPPING
-    fsm.transitionTo(IncidentState.DIAGNOSING, "Correlating telemetry and mapping AST source context");
+    fsm.transitionTo(
+      IncidentState.DIAGNOSING,
+      "Correlating telemetry and mapping AST source context",
+    );
     const { stackFrames } = await this.logCorrelator.correlateTrace(alert);
     const sourceContext = await this.astMapper.mapFrameToSource(stackFrames);
-    const diagnostic = await this.hypothesisEngine.generateHypotheses(alert, sourceContext, stackFrames);
+    const diagnostic = await this.hypothesisEngine.generateHypotheses(
+      alert,
+      sourceContext,
+      stackFrames,
+    );
 
     console.log(`[IncidentAI] 🔍 Root-Cause Diagnosis Complete:`);
     console.log(`             Failing File: ${diagnostic.targetFile}:${diagnostic.targetLine}`);
     console.log(`             Top Hypothesis: ${diagnostic.hypotheses[0]}`);
 
     // STAGE 2: SANDBOX REPRODUCTION
-    fsm.transitionTo(IncidentState.SANDBOX_REPRODUCING, "Isolating in sandbox and generating reproduction spec");
+    fsm.transitionTo(
+      IncidentState.SANDBOX_REPRODUCING,
+      "Isolating in sandbox and generating reproduction spec",
+    );
     const sandboxDir = await this.sandboxRunner.createIsolatedWorkspace(alert.id);
     const spec = await this.specGenerator.generateReproductionSpec(diagnostic, sandboxDir);
     await this.testOracle.verifyReproduction(spec.testCommand, { cwd: sandboxDir });
@@ -79,7 +89,7 @@ export class IncidentAIOrchestrator {
       process.cwd(),
       alert.id,
       alert.service,
-      repair.finalPatch!
+      repair.finalPatch!,
     );
 
     fsm.transitionTo(IncidentState.PR_SUBMITTED, `Pull request created on branch ${commit.branch}`);
@@ -91,7 +101,7 @@ export class IncidentAIOrchestrator {
       diagnostic,
       repair,
       timeline,
-      commit.branch
+      commit.branch,
     );
 
     console.log(`\n============================================================`);

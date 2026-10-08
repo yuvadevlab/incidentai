@@ -32,7 +32,7 @@ export class GitCommitter {
     repoDir: string,
     incidentId: string,
     _service: string,
-    patch: PatchCandidate
+    patch: PatchCandidate,
   ): Promise<CommitResult> {
     const branchName = `fix/incidentai-${incidentId.toLowerCase()}`;
     const commitMessage = `fix(core): auto-remediation for incident ${incidentId} (attempt #${patch.attempt})`;
@@ -42,9 +42,12 @@ export class GitCommitter {
       await execAsync(`git checkout -B ${branchName}`, { cwd: repoDir });
 
       // 2. Commit changes with --no-verify to bypass local husky interactive hooks
-      await execAsync(`git commit --allow-empty --no-verify -m "${commitMessage.replace(/"/g, '\\"')}"`, {
-        cwd: repoDir,
-      });
+      await execAsync(
+        `git commit --allow-empty --no-verify -m "${commitMessage.replace(/"/g, '\\"')}"`,
+        {
+          cwd: repoDir,
+        },
+      );
 
       // 3. Retrieve commit hash
       const { stdout } = await execAsync("git rev-parse HEAD", { cwd: repoDir });
