@@ -1,258 +1,201 @@
-# IncidentAI — Product Specification, Technical Dossier & Operations Manual
+# IncidentAI — Master Product Specification, Technical Dossier & Operations Manual
 
 ---
 
-## 1. Executive Product Dossier & Market Vision
+## 1. Product File: Strategic Vision & Autonomous SRE Mandate
 
-### 1.1 The Operational Problem Space
+### 1.1 Executive Product Summary
 
-In mission-critical distributed cloud environments (microservices, multi-region database clusters, autonomous agent swarms), infrastructure downtime is catastrophic:
+**IncidentAI** is the autonomous SRE Incident Commander, root-cause diagnosis engine, and automated self-healing platform for the DevLab multi-repo ecosystem (`orchestrai`, `finai`, `devlab-portal`, `devlab-logs`).
 
-- **Financial Blast Radius**: Industry benchmarks establish that enterprise downtime exceeds **$300,000 to $540,000 per hour** in lost transactions and SLA penalties.
-- **The Human Cognitive Bottleneck**: Traditional incident triage relies on fractured alerts fired via PagerDuty or Opsgenie. Human on-call engineers are awakened at 3:00 AM, log into disparate dashboards (Grafana, Datadog, AWS CloudWatch, Kubernetes consoles), manually parse through gigabytes of logs, formulate speculative hypotheses under stress, and attempt manual mitigation.
-- **The "Remediation Roulette"**: Human operators under pressure frequently commit untested patches, trigger bad database rollbacks, or forget cascading dependencies, causing secondary outages.
-- **Retrospective Fatigue**: Root Cause Analysis (RCA) and postmortems are frequently delayed or skipped entirely due to on-call burnout, guaranteeing that identical outages recur.
+When outages occur in distributed AI systems or fintech platforms, human on-call engineers spend precious minutes waking up, correlating log traces, and parsing stack traces before writing a fix. IncidentAI eliminates this mean time to repair (MTTR) latency through autonomous closed-loop SRE primitives:
 
-### 1.2 The IncidentAI Value Proposition
+1. **Deterministic Incident State Machine (FSM)**: Manages incidents through a formal lifecycle (`DETECTED` -> `TRIAGING` -> `DIAGNOSING` -> `REMEDIATING` -> `VERIFYING` -> `RESOLVED`), ensuring zero chaos or hallucinated actions during triage.
+2. **Context-Aware Root-Cause Diagnosis (RCA)**: Automatically fetches correlating logs from DevLab Logs, inspects recent git commits, and analyzes error call-stacks to isolate the exact commit, file, and function causing the failure.
+3. **Isolated Sandbox Reproduction**: Replays the failing payload inside an ephemeral Docker sandbox to safely reproduce the defect without exposing production databases or traffic.
+4. **Autonomous Code Repair & Branch Synthesis**: Synthesizes verified code patches, applies them to an isolated git branch (`fix/incident-...`), runs full test suites, and opens pull requests for human review.
+5. **Automated Postmortem Scribe**: Automatically authors exhaustive markdown postmortem documents with incident timelines, root causes, 5 Whys analysis, and preventive action items.
 
-**IncidentAI** (formerly Chaos Doctor) is the industry's first **Autonomous AI Site Reliability Engineer and Self-Healing Incident Commander**. It transforms reactive human firefighting into deterministic, autonomous, self-healing system resilience:
+### 1.2 Target Personas & Primary Use Cases
 
-1. **Zero Human-Latency Detection**: Telemetry alerts are ingested in real-time from `devlab-logs` and gateway streams.
-2. **Deterministic State Machine Governance**: Operates under an immutable Finite State Machine (FSM), ensuring no skipped stages or chaotic interventions.
-3. **AST-Driven Forensic Triage**: Stack traces are parsed into exact source-code AST nodes, pinpointing the precise offending file, function, and statement.
-4. **Zero-Hallucination Sandboxed Remediation**: AI-generated code patches and mitigation scripts are **never** executed blindly on production. They are synthesized, containerized, and tested inside isolated reproduction sandboxes before human review or deployment.
-5. **Human-in-the-Loop (HITL) Authorization Rails**: Enforces cryptographic signing via DevLab Portal for high-blast-radius operations (SEV-1/P1).
-6. **Instantaneous Blameless Postmortems**: Reconstructs exact second-by-second incident timelines, computes MTTD, MTTA, and MTTM, and publishes production-ready postmortems and PRs within seconds of mitigation.
+| Persona                             | Operational Context                                               | Primary Pain Points Addressed                                                                                           |
+| :---------------------------------- | :---------------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------- |
+| **Site Reliability Engineer (SRE)** | On-call triage during critical production outages                 | Accelerates root-cause discovery from hours to seconds; automatically isolates noisy logs and suggests verified fixes.  |
+| **Engineering Leader / VP**         | Managing platform reliability, SLAs, and post-incident compliance | Guarantees that every production incident has a structured, blameless postmortem report with concrete prevention tasks. |
+| **DevOps / Platform Engineer**      | Maintaining CI/CD and production container deployments            | Provides automated crash reproduction in isolated sandboxes before applying hotfixes.                                   |
+| **Backend Developer**               | Debugging edge-case exceptions reported by users                  | Receives ready-to-merge pull requests with regression tests reproducing the exact failure mode.                         |
 
 ---
 
-## 2. Exhaustive Feature Matrix & Deep Technical Explanation
+## 2. Exhaustive Feature Directory & Technical Mechanics
 
 ```
-┌────────────────────────────────────────────────────────────────────────────────────────┐
-│                              INCIDENTAI FEATURE PIPELINE                               │
-└────────────────────────────────────────────────────────────────────────────────────────┘
- [Telemetry Stream] ──▶ [1. Ingestion] ──▶ [2. FSM Router] ──▶ [3. AST Forensics]
-                                                                     │
- [GitHub PR / Docs] ◀── [6. Postmortem] ◀── [5. Self-Healing] ◀──────┴── [4. Sandbox]
+┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                   INCIDENTAI PLATFORM TOPOLOGY                                         │
+└────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+          [Webhook Ingress (:8085)]               [SRE CLI: incidentai triage]
+                      │                                        │
+                      └───────────────────┬────────────────────┘
+                                          ▼
+                      [Deterministic Incident State Machine (FSM)]
+               DETECTED ──► TRIAGING ──► DIAGNOSING ──► REMEDIATING
+                                              ▲              │
+                                         (fail)│              ▼
+                                          VERIFYING ◄────────┘
+                                               │
+                                            (pass)
+                                               ▼
+                                           RESOLVED
+                                               │
+     ┌─────────────────────────┬───────────────┴───────────────┬─────────────────────────┐
+     ▼                         ▼                               ▼                         ▼
+[Diagnosis Subsystem]     [Sandbox Runner]            [Automated Repair Engine] [Postmortem Scribe]
+ • Log Correlator (:3020)  • Ephemeral Docker Sandbox  • Code Patch Synthesis    • 5 Whys Analysis
+ • Git Commit Diff Inspector• Safe Fault Reproduction  • Automated Branch PR     • Action Item Tracker
+ • Stack Trace De-obfuscate• Zero Production Leakage   • Regression Test Run     • Markdown Report Export
 ```
 
-### Feature 1: Multi-Protocol Telemetry Alert Ingestion
+### 2.1 Core Subsystem Breakdown
 
-- **Module**: `src/fsm/alert_listener.ts`
-- **Objective**: Intercept alerts, fatal crashes, and metric anomaly spikes across distributed applications without polling overhead.
-- **How It Works**:
-  - Exposes an HTTP webhook receiver and an event listener streaming directly from `devlab-logs` (Kafka / DuckDB).
-  - Validates every incoming alert against `IncidentAlertSchema` using Zod runtime parsing.
-  - Normalizes alerts into a canonical `IncidentAlert` entity with unique incident IDs (`inc-<base36>`), service origin, severity level, trace correlation ID, and ISO timestamp.
-- **Inputs**: Raw JSON webhook payloads or Kafka event envelopes.
-- **Outputs**: Strongly typed `IncidentAlert` instances dispatched to the orchestrator.
-- **Failure Recovery**: Malformed alerts are safely routed to a dead-letter log without interrupting active incident pipelines.
+#### 1. Deterministic Incident FSM (`src/fsm`)
 
-### Feature 2: Deterministic Incident Lifecycle FSM
+- **Technology Stack**: TypeScript, State Machine Pattern, `@yuva-devlab/shared-types`.
+- **Purpose**: Controls every incident transition through mathematical state invariants.
+- **Detailed States**:
+  - `DETECTED`: Incident logged via webhook from DevLab Logs or microservice alert.
+  - `TRIAGING`: Deduplicates events, assigns severity (`SEV1` through `SEV4`), and checks deduplication keys.
+  - `DIAGNOSING`: Queries DevLab Logs and correlates recent git commits.
+  - `REMEDIATING`: Generates candidate code patches and configuration tweaks.
+  - `VERIFYING`: Re-runs failure reproduction in sandbox to verify the fix works.
+  - `RESOLVED`: Emits resolved notification, opens PR, and dispatches the postmortem report.
 
-- **Module**: `src/fsm/incident_fsm.ts`
-- **Objective**: Prevent unpredictable agent actions by enforcing strict mathematical state transitions.
-- **How It Works**:
-  - Implements an asynchronous Finite State Machine governing the incident lifecycle:
-    ```
-    IDLE ──▶ ALERT_DETECTED ──▶ DIAGNOSING ──▶ SANDBOX_REPRODUCING
-                                                        │
-    PR_SUBMITTED ◀── VERIFYING ◀── HEALING ◀────────────┘
-         │
-         └──▶ [FAILED] (Fallback to on-call escalation)
-    ```
-  - Every transition asserts preconditions (e.g. state cannot transition from `DIAGNOSING` to `HEALING` without an approved `DiagnosticReport`).
-  - Records duration and state change metadata for retrospective timeline analysis.
-- **Inputs**: Transition events emitted by the orchestrator.
-- **Outputs**: Immutable state change logs and reactive event callbacks.
+#### 2. Root-Cause Diagnosis Subsystem (`src/diagnosis`)
 
-### Feature 3: Stack Trace AST Mapping & Forensic Analysis
+- **Detailed Features**:
+  - Automatically queries DevLab Logs (`:3020`) for all log lines sharing the incident's `traceId`.
+  - Analyzes git history using `git log --since` to correlate recent code deployments with error onset.
+  - Uses AI reasoning models to identify the exact line of code and logical error causing the failure.
 
-- **Module**: `src/diagnosis/log_correlator.ts` & `src/diagnosis/ast_mapper.ts`
-- **Objective**: Connect runtime telemetry crashes directly to concrete source code locations in the repository.
-- **How It Works**:
-  - `log_correlator.ts` extracts raw stack traces from alert text, parsing frames into structured tuples: `{ file, line, column, functionName }`.
-  - `ast_mapper.ts` resolves relative paths to absolute monorepo targets, extracts surrounding source code snippets (10 lines before and after), and maps the execution frame to the Abstract Syntax Tree.
-- **Inputs**: Stack trace strings and repository file paths.
-- **Outputs**: `DiagnosticReport` containing parsed frames, target code snippet, and affected symbols.
+#### 3. Sandbox Reproduction Runner (`src/sandbox`)
 
-### Feature 4: Hypothesis Generation Engine
+- **Technology Stack**: Docker API, ephemeral Linux containers.
+- **Detailed Features**:
+  - Spins up isolated execution environments with network isolation.
+  - Replays the exact request payload that triggered the crash to confirm reproduction.
 
-- **Module**: `src/diagnosis/hypothesis_engine.ts`
-- **Objective**: Analyze the correlated failure and formulate prioritized root-cause hypotheses with confidence metrics.
-- **How It Works**:
-  - Evaluates exception patterns (e.g., connection pool starvation, memory leaks, unhandled null pointers, deadlocks).
-  - Synthesizes 3-5 ranked hypotheses explaining _why_ the crash occurred, citing exact lines of code.
-- **Inputs**: `DiagnosticReport` snippet and error message.
-- **Outputs**: Scored hypothesis list attached to the `DiagnosticReport`.
+#### 4. Automated Code Repair Engine (`src/repair`)
 
-### Feature 5: Ephemeral Sandbox Reproduction & Test Oracle
+- **Detailed Features**:
+  - Generates minimal, surgical code diffs fixing the underlying bug.
+  - Creates a dedicated branch (`fix/incident-<id>`), commits the patch, and triggers CI.
 
-- **Module**: `src/sandbox/reproduction_spec.ts`, `src/sandbox/sandbox_runner.ts`, `src/sandbox/test_oracle.ts`
-- **Objective**: Guarantee zero-hallucination fixes by reproducing the failure in isolation before attempting any repair.
-- **How It Works**:
-  - `reproduction_spec.ts` compiles an executable reproduction script simulating the exact runtime inputs that triggered the crash.
-  - `sandbox_runner.ts` provisions an isolated execution context (timeout-bounded child process or container), executes the reproduction spec, and captures exit codes, stdout, and stderr.
-  - `test_oracle.ts` verifies that the failure reproduces faithfully (exit code $\neq 0$ or specific error logged).
-- **Inputs**: Reproduction script and target repository environment.
-- **Outputs**: `SandboxResult` verifying whether the failure is actively reproducible.
+#### 5. Postmortem Scribe (`src/postmortem`)
 
-### Feature 6: Autonomous Patch Synthesis & Self-Correction Feedback Loop
+- **Detailed Features**:
+  - Automatically writes a comprehensive, blameless postmortem markdown file.
+  - Includes: Incident Summary, Impact Metrics (Downtime, affected tenants), Chronological Timeline, Root Cause Analysis, 5 Whys, and Preventative Action Items.
 
-- **Module**: `src/repair/patch_synthesizer.ts` & `src/repair/feedback_loop.ts`
-- **Objective**: Author surgical code repairs and iterate until the sandbox test passes.
-- **How It Works**:
-  - `patch_synthesizer.ts` analyzes the code snippet and diagnosis report to synthesize a unified git diff patch.
-  - `feedback_loop.ts` applies the patch inside the isolated sandbox, then re-runs the reproduction test suite.
-  - If the test passes, the patch is promoted to verification. If it fails, the error output is fed back into the synthesizer for up to 3 iterative self-correction attempts.
-- **Inputs**: Failed reproduction result, code snippet, and hypothesis.
-- **Outputs**: `RepairOutcome` containing the verified `PatchCandidate` or an escalation error.
+#### 6. Webhook Ingestion Service (`src/index.ts` — Port `8085`)
 
-### Feature 7: Git Automation & PR Publication
-
-- **Module**: `src/repair/git_committer.ts` & `src/postmortem/pr_generator.ts`
-- **Objective**: Package verified fixes into production-ready Git pull requests without human manual branch management.
-- **How It Works**:
-  - Checks out a dedicated remediation branch (`fix/incident-<id>-<timestamp>`).
-  - Writes the verified patch, stages changes, and creates a commit formatted according to Conventional Commits: `fix(<service>): remediate <title>`.
-  - Emits formatted GitHub PR markdown with reproduction evidence and test logs.
-- **Inputs**: `PatchCandidate` and incident metadata.
-- **Outputs**: Created Git branch and published pull request.
-
-### Feature 8: SRE Postmortem Scribe & Timeline Reconstruction
-
-- **Module**: `src/postmortem/timeline_builder.ts`
-- **Objective**: Compile blameless Google SRE-style postmortem documents immediately upon resolution.
-- **How It Works**:
-  - Reconstructs an exact chronological timeline from the FSM state logs.
-  - Computes operational metrics:
-    - **MTTD (Mean Time to Detect)**: Timestamp of failure to alert trigger.
-    - **MTTA (Mean Time to Acknowledge)**: Alert trigger to FSM triage transition.
-    - **MTTM (Mean Time to Mitigate)**: Triage transition to verified sandbox patch.
-  - Outputs a structured Markdown report ready for archiving in the knowledge base.
-- **Inputs**: Incident FSM transition history and `RepairOutcome`.
-- **Outputs**: `PostMortemReport` and persistent markdown document.
+- **Technology Stack**: Fastify v4, TypeScript Node ESM.
+- **Purpose**: Listens for error alerts and exceptions dispatched by `orchestrai`, `finai`, `devlab-portal`, or `devlab-logs`.
 
 ---
 
-## 3. How IncidentAI Interacts with the DevLab Multi-Repo Ecosystem
+## 3. Inter-System Ecosystem Collaboration ("How It Works With Others")
 
 ```mermaid
 sequenceDiagram
     autonumber
-    participant DL as DevLab Logs
-    participant IA as IncidentAI
-    participant DG as DevLab Guard
-    participant DP as DevLab Portal
-    participant OA as OrchestraI / FinAI
+    participant App as Monorepo App (orchestrai / finai)
+    participant Logs as DevLab Logs (:3020)
+    participant IA as IncidentAI (:8085)
+    participant Sandbox as Docker Sandbox
+    participant Git as GitHub / Git Branch
 
-    DL->>IA: Push Anomaly / Error Crash Alert
-    Note over IA: Transition: IDLE -> ALERT_DETECTED -> DIAGNOSING
-    IA->>OA: Inspect Codebase & Map AST Frames
-    Note over IA: Transition: DIAGNOSING -> SANDBOX_REPRODUCING
-    IA->>IA: Execute Reproduction Script in Sandbox
-    Note over IA: Transition: SANDBOX_REPRODUCING -> HEALING
-    IA->>IA: Synthesize Candidate Code Patch
-    IA->>DG: Validate Patch against AST Governance Rules (250-line, etc.)
-    DG-->>IA: Governance Pass Confirmed
-    Note over IA: Transition: HEALING -> VERIFYING
-    IA->>IA: Execute Test Oracle in Sandbox
-    alt P1 / High Blast Radius
-        IA->>DP: Request Human Approval Signature
-        DP-->>IA: Cryptographic Token Approved
-    end
-    Note over IA: Transition: VERIFYING -> PR_SUBMITTED
-    IA->>OA: Commit Patch & Open Git Remediation PR
-    IA->>DL: Stream Resolution Telemetry & Metrics
-    IA->>DP: Publish Postmortem & SRE Timeline
+    App->>Logs: 1. Stream Unhandled Error Stack Trace (:3020)
+    Logs->>IA: 2. Dispatch Incident Alert Webhook (:8085)
+    IA->>IA: 3. Transition FSM: DETECTED -> TRIAGING -> DIAGNOSING
+    IA->>Logs: 4. Query Historical Logs for traceId
+    Logs-->>IA: Return 200 Correlated Log Events
+
+    IA->>Sandbox: 5. Spin up Docker Sandbox & Replay Failing Payload
+    Sandbox-->>IA: Bug Successfully Reproduced in Sandbox
+
+    IA->>IA: 6. Synthesize Surgical Code Patch
+    IA->>Sandbox: 7. Apply Patch & Verify Tests Pass
+    Sandbox-->>IA: All Tests Pass (100% Green)
+
+    IA->>Git: 8. Push Branch fix/incident-991 & Open Pull Request
+    IA->>IA: 9. Scribe Complete Markdown Postmortem Report
 ```
 
-### Detailed Ecosystem Interaction Matrix
+### 3.1 Inter-Repository Integration Matrix
 
-| Ecosystem Member    |   Direction    | Protocol / Transport                           | Data Payload / Contract                                                                                                 |
-| :------------------ | :------------: | :--------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------- |
-| **`devlab-logs`**   |    Inbound     | HTTP Webhook / Kafka Consumer                  | Streams fatal crash logs, p99 latency spikes, and OOM alerts into `AlertListener`.                                      |
-| **`devlab-guard`**  |    Outbound    | REST API (`http://localhost:8080/api/v1/scan`) | Sends synthesized patches to Guard to verify they do not violate the 250-line limit or comment rules before committing. |
-| **`devlab-portal`** | Bi-directional | REST API (`http://localhost:3010`) & Socket.IO | Sends real-time incident status to the web portal; polls for human authorization tokens on P1 actions.                  |
-| **`orchestrai`**    |    Outbound    | Direct Workspace & gRPC (`:50051`)             | Triages crashes occurring in the orchestrator runtime, repairs agent nodes, and commits git patches.                    |
-| **`finai`**         |    Outbound    | Direct Workspace                               | Intercepts financial transaction errors, tests repairs against the finance engine, and commits patches.                 |
-| **`devlab-shared`** |     Static     | Internal npm package link                      | Consumes `@yuva-devlab/logger`, `@yuva-devlab/errors`, and `@yuva-devlab/regex` for shared contracts.                   |
-
----
-
-## 4. Technical Guidelines & Invariants
-
-### 4.1 Language & Tooling Choices
-
-- **TypeScript 5.8 (Node.js ESM)**:
-  - Selected for strict compile-time type verification across complex incident states.
-  - Zero-transpile rapid execution using `tsx`.
-- **Commander CLI (v13)**:
-  - Standardized enterprise command-line parsing supporting interactive drills and daemon polling.
-- **Zod 3.24**:
-  - Runtime validation guarding against malformed alert streams.
-
-### 4.2 Architectural Standards
-
-1. **Hard 250-Line Maximum Rule**: Every file in `src/` must remain strictly under 250 physical lines.
-2. **Canonical Snake_Case Enums**: All statuses (`idle`, `alert_detected`, `diagnosing`, `p1_critical`) must use strict canonical enum constants.
-3. **Sandbox Isolation Invariant**: No synthesized patch may be committed to a git branch without passing the sandbox reproduction oracle.
-4. **Idempotency**: All remediation actions must be safe to re-execute without creating duplicate side-effects.
+| Ecosystem Member    | Direction | Protocol & Transport   | Purpose & Operational Behavior                                                                    |
+| :------------------ | :-------: | :--------------------- | :------------------------------------------------------------------------------------------------ |
+| **`devlab-logs`**   |  Inbound  | HTTP/2 REST (`:3020`)  | Queries correlated trace logs and historical telemetry during automated root-cause diagnosis.     |
+| **`orchestrai`**    |  Inbound  | HTTP Webhook (`:8085`) | Receives crash alerts, worker timeouts, and tool sandbox exceptions for automated triage.         |
+| **`finai`**         |  Inbound  | HTTP Webhook (`:8085`) | Receives banking sync exceptions and ledger invariant violations for immediate SRE investigation. |
+| **`devlab-portal`** |  Inbound  | HTTP Webhook (`:8085`) | Monitors control plane health and alert drops.                                                    |
+| **`devlab-guard`**  |  Inbound  | CLI Git Pre-commit     | Enforces the 250-line rule, strict enums, and code quality before commit.                         |
+| **`devlab-shared`** |  Static   | npm Package Imports    | Consumes `@yuva-devlab/errors`, `@yuva-devlab/resilience`, and `@yuva-devlab/logger`.             |
 
 ---
 
-## 5. Complete Usage Runbook & CLI Reference
+## 4. Technical Guidelines & Invariant Rules
 
-### 5.1 Installation & Configuration
+### 4.1 Prime Non-Negotiable Invariants
+
+1. **Deterministic FSM Transitions**:
+   - State machine transitions must be strictly enforced; state cannot jump arbitrarily (e.g. `DETECTED` cannot transition directly to `RESOLVED` without verification).
+2. **Zero Production Mutation**:
+   - IncidentAI is NEVER permitted to mutate production databases or directly commit to production branches (`main` or `dev`). All fixes must be proposed as pull requests.
+3. **Hard 250-Line Maximum Rule**:
+   - No source file across `src/*` may exceed 250 lines. Decompose early at 200 lines.
+4. **Canonical Enums Only**:
+   - All incident severities (`SEV1`, `SEV2`, `SEV3`, `SEV4`) and states must use strict TypeScript enums.
+
+---
+
+## 5. Developer Usage Guidelines & Operations Manual
+
+### 5.1 Local Prerequisites & Setup
 
 ```bash
 # Clone the repository
 git clone https://github.com/yuvadevlab/incidentai.git
 cd incidentai
 
-# Install dependencies via pnpm
+# Install dependencies
 pnpm install
 
-# Build CLI binary
+# Start Webhook Receiver in development mode (:8085)
+pnpm dev
+
+# Build the project
 pnpm build
 ```
 
-### 5.2 Command Reference
+### 5.2 Complete Environment Variables Reference
 
-#### 1. Autonomous SRE Fire Drill Demo
+| Variable          |  Type  |            Default            | Required | Description                                         |
+| :---------------- | :----: | :---------------------------: | :------: | :-------------------------------------------------- |
+| `PORT`            | Number |            `8085`             |   Yes    | Webhook receiver HTTP port.                         |
+| `DEVLAB_LOGS_URL` | String |    `http://localhost:3020`    |   Yes    | DevLab Logs ingestion endpoint for querying traces. |
+| `DOCKER_HOST`     | String | `unix:///var/run/docker.sock` |    No    | Docker daemon socket for sandbox reproduction.      |
 
-Runs an end-to-end simulation of a P1 database timeout outage:
-
-```bash
-pnpm run demo
-# or
-node dist/cli.js demo
-```
-
-#### 2. Specific Incident Scenario Execution
-
-Triggers remediation for a targeted service and failure scenario:
+### 5.3 Simulating an Incident via Webhook Example
 
 ```bash
-node dist/cli.js run --scenario "DB Connection Pool Exhaustion" --service "finai"
+curl -X POST http://localhost:8085/api/v1/incidents/webhook \
+  -H "Content-Type: application/json" \
+  -d '{
+    "service": "orchestrai-worker",
+    "severity": "SEV1",
+    "title": "Unhandled Memory Allocation Failure in Vector Embedding Sandbox",
+    "traceId": "trace_99882233",
+    "stackTrace": "FatalError: Out of memory in worker sandbox\n  at VectorEngine.embed (/apps/worker/src/embed.ts:42)",
+    "timestamp": "2026-10-08T22:30:00.000Z"
+  }'
 ```
-
-#### 3. Continuous Telemetry Stream Monitor
-
-Launches the daemon listener streaming crashes from DevLab Logs:
-
-```bash
-node dist/cli.js watch
-```
-
-### 5.3 Environment Variables Reference
-
-| Variable            | Type   | Default                 | Description                                             |
-| :------------------ | :----- | :---------------------- | :------------------------------------------------------ |
-| `NODE_ENV`          | String | `development`           | Environment mode (`development`, `production`, `test`). |
-| `PORT`              | Number | `8085`                  | HTTP port for incoming alert webhooks.                  |
-| `DEVLAB_LOGS_URL`   | String | `http://localhost:3020` | Ingestion endpoint for DevLab Logs telemetry.           |
-| `DEVLAB_PORTAL_URL` | String | `http://localhost:3010` | Endpoint for DevLab Portal HITL authorization.          |
-| `DEVLAB_GUARD_URL`  | String | `http://localhost:8080` | Endpoint for DevLab Guard AST governance reviews.       |
-| `LOG_LEVEL`         | String | `info`                  | Logging verbosity (`debug`, `info`, `warn`, `error`).   |
