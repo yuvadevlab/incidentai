@@ -1,102 +1,258 @@
-# IncidentAI — Deep Product & Technical Specification Dossier
+# IncidentAI — Product Specification, Technical Dossier & Operations Manual
 
-## 1. Product Overview & Vision
+---
+
+## 1. Executive Product Dossier & Market Vision
 
 ### 1.1 The Operational Problem Space
 
-In modern distributed cloud-native architectures (microservices, Kubernetes, multi-region database clusters, event meshes), downtime costs exceed $300,000 per hour for high-growth enterprises. Traditional incident response relies on fragmented alerts sent to human on-call engineers via PagerDuty or Opsgenie. Humans must wake up, log into fragmented dashboards (Datadog, Grafana, CloudWatch), sift through millions of log lines, manually speculate on root causes, and execute unverified commands under extreme pressure. This leads to extended Mean Time to Detect (MTTD) and Mean Time to Mitigate (MTTM), human error during triage, and recurring outages.
+In mission-critical distributed cloud environments (microservices, multi-region database clusters, autonomous agent swarms), infrastructure downtime is catastrophic:
 
-### 1.2 The IncidentAI Solution
+- **Financial Blast Radius**: Industry benchmarks establish that enterprise downtime exceeds **$300,000 to $540,000 per hour** in lost transactions and SLA penalties.
+- **The Human Cognitive Bottleneck**: Traditional incident triage relies on fractured alerts fired via PagerDuty or Opsgenie. Human on-call engineers are awakened at 3:00 AM, log into disparate dashboards (Grafana, Datadog, AWS CloudWatch, Kubernetes consoles), manually parse through gigabytes of logs, formulate speculative hypotheses under stress, and attempt manual mitigation.
+- **The "Remediation Roulette"**: Human operators under pressure frequently commit untested patches, trigger bad database rollbacks, or forget cascading dependencies, causing secondary outages.
+- **Retrospective Fatigue**: Root Cause Analysis (RCA) and postmortems are frequently delayed or skipped entirely due to on-call burnout, guaranteeing that identical outages recur.
 
-IncidentAI is an **Autonomous AI Site Reliability Engineer and Self-Healing Incident Commander**. It transforms incident management from reactive human firefighting into deterministic, autonomous mitigation:
+### 1.2 The IncidentAI Value Proposition
 
-1. **Continuous Anomaly Ingestion**: Intercepts high-cardinality telemetry and error alerts from DevLab Logs and platform gateways.
-2. **Deterministic State Machine (FSM)**: Governs the incident lifecycle via mathematical state transitions, eliminating chaotic or skipped investigation steps.
-3. **Specialized Multi-Agent Swarm**: Deploys discrete, role-bounded agents (Commander, Diagnostician, Remediator, Scribe) with isolated authority.
-4. **Sandboxed Dry-Run Execution**: Automatically authors remediation scripts and simulates them inside ephemeral sandbox runtimes before production execution.
-5. **Human-in-the-Loop (HITL) Governance**: Enforces cryptographic sign-off for high-blast-radius operations, balancing autonomy with safety.
-6. **Blameless SRE Retrospectives**: Reconstructs exact second-by-second timelines and compiles production postmortems within seconds of resolution.
+**IncidentAI** (formerly Chaos Doctor) is the industry's first **Autonomous AI Site Reliability Engineer and Self-Healing Incident Commander**. It transforms reactive human firefighting into deterministic, autonomous, self-healing system resilience:
 
----
-
-## 2. Technical Stack & Architectural Rationale
-
-### 2.1 Language Choice: TypeScript 5.8 (Node.js ESM)
-
-- **Why TypeScript?**
-  - **Contract-Driven Safety**: SRE systems execute dangerous infrastructure commands. TypeScript's strict type checker prevents null-pointer exceptions, missing parameters, and runtime type coercions that could trigger unintended cluster operations.
-  - **Shared Domain Contracts**: Seamlessly shares schemas, enums, error contracts, and logging primitives with `@yuva-devlab/shared`, `@yuva-devlab/logger`, and the DevLab Portal.
-  - **Async Event I/O**: High-concurrency non-blocking I/O ideal for polling multiple monitoring APIs, streaming logs, and coordinating agent workflows simultaneously.
-- **Alternatives Considered**:
-  - _Go_: Exceptional for low-level systems programming and daemons (used in `devlab-logs/agent`), but TypeScript offers superior JSON schema manipulation, dynamic agent prompt synthesis, and shared monorepo contracts with frontend interfaces.
-  - _Python_: Popular for data science, but lacks the end-to-end compile-time contract guarantees and native monorepo workspace synergy with our web control plane.
-
-### 2.2 Framework & Core Libraries
-
-| Component               | Selection                                | Rationale                                                                                                                                |
-| :---------------------- | :--------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------- |
-| **CLI Runtime**         | `commander` (v13)                        | Enterprise-grade command-line parser with type-safe argument parsing, sub-command trees, and automatic help generation.                  |
-| **Contract Validation** | `zod` (v3.24)                            | Runtime schema validation with TypeScript static inference. Validates all inbound alerts, telemetry envelopes, and remediation payloads. |
-| **Execution Tooling**   | `tsx` + `esbuild`                        | Zero-bundle rapid execution during local development and testing without intermediate transpile steps.                                   |
-| **Structured Logging**  | `@yuva-devlab/logger`                    | High-performance JSON logging with context correlation IDs, log level filtering, and trace propagation.                                  |
-| **Git Hooks & Quality** | `husky` (v9) + `commitlint` + `prettier` | Guarantees 100% adherence to Conventional Commits and code formatting standards before commits touch source control.                     |
+1. **Zero Human-Latency Detection**: Telemetry alerts are ingested in real-time from `devlab-logs` and gateway streams.
+2. **Deterministic State Machine Governance**: Operates under an immutable Finite State Machine (FSM), ensuring no skipped stages or chaotic interventions.
+3. **AST-Driven Forensic Triage**: Stack traces are parsed into exact source-code AST nodes, pinpointing the precise offending file, function, and statement.
+4. **Zero-Hallucination Sandboxed Remediation**: AI-generated code patches and mitigation scripts are **never** executed blindly on production. They are synthesized, containerized, and tested inside isolated reproduction sandboxes before human review or deployment.
+5. **Human-in-the-Loop (HITL) Authorization Rails**: Enforces cryptographic signing via DevLab Portal for high-blast-radius operations (SEV-1/P1).
+6. **Instantaneous Blameless Postmortems**: Reconstructs exact second-by-second incident timelines, computes MTTD, MTTA, and MTTM, and publishes production-ready postmortems and PRs within seconds of mitigation.
 
 ---
 
-## 3. Structural & Architectural Design
-
-### 3.1 Clean Domain-Driven Architecture
-
-IncidentAI follows Clean Architecture principles with unidirectional inward dependencies:
+## 2. Exhaustive Feature Matrix & Deep Technical Explanation
 
 ```
-src/
-├── constants/       # Immutable domain primitives, status enums, severity scales
-├── fsm/             # State machine engine, transition guards, event dispatchers
-├── diagnosis/       # Trace correlation, log clustering, hypothesis ranking
-├── sandbox/         # Ephemeral execution runners, security isolation, timeout monitors
-├── repair/          # Remediation plan generators, idempotency verifiers, dispatchers
-├── postmortem/      # Timeline aggregators, markdown compilers, SRE metrics engines
-└── cli.ts           # Presentation layer / CLI command routing
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                              INCIDENTAI FEATURE PIPELINE                               │
+└────────────────────────────────────────────────────────────────────────────────────────┘
+ [Telemetry Stream] ──▶ [1. Ingestion] ──▶ [2. FSM Router] ──▶ [3. AST Forensics]
+                                                                     │
+ [GitHub PR / Docs] ◀── [6. Postmortem] ◀── [5. Self-Healing] ◀──────┴── [4. Sandbox]
 ```
 
-### 3.2 Finite State Machine (FSM) Lifecycle
+### Feature 1: Multi-Protocol Telemetry Alert Ingestion
 
-The Incident FSM guarantees that every failure is investigated and resolved systematically:
+- **Module**: `src/fsm/alert_listener.ts`
+- **Objective**: Intercept alerts, fatal crashes, and metric anomaly spikes across distributed applications without polling overhead.
+- **How It Works**:
+  - Exposes an HTTP webhook receiver and an event listener streaming directly from `devlab-logs` (Kafka / DuckDB).
+  - Validates every incoming alert against `IncidentAlertSchema` using Zod runtime parsing.
+  - Normalizes alerts into a canonical `IncidentAlert` entity with unique incident IDs (`inc-<base36>`), service origin, severity level, trace correlation ID, and ISO timestamp.
+- **Inputs**: Raw JSON webhook payloads or Kafka event envelopes.
+- **Outputs**: Strongly typed `IncidentAlert` instances dispatched to the orchestrator.
+- **Failure Recovery**: Malformed alerts are safely routed to a dead-letter log without interrupting active incident pipelines.
 
-```
-  [DETECTED] ──> [TRIAGING] ──> [DIAGNOSING] ──> [MITIGATING] ──> [VERIFYING] ──> [RESOLVED] ──> [POSTMORTEM]
-      │              │               │                 │                │
-      └──────────────┴───────────────┴─────────────────┴────────────────┴───> [ESCALATED / HITL]
-```
+### Feature 2: Deterministic Incident Lifecycle FSM
 
-- **DETECTED**: Ingestion of raw alert signal.
-- **TRIAGING**: Severity classification (`p1_critical` to `p4_low`) and blast-radius estimation.
-- **DIAGNOSING**: Anomaly isolation, log query execution, and hypothesis ranking.
-- **MITIGATING**: Remediation plan generation and sandbox dry-run execution.
-- **VERIFYING**: Automated post-mitigation health check and metric slope verification.
-- **RESOLVED**: Confirmation of SLO restoration.
-- **POSTMORTEM**: Automated timeline compilation, MTTD/MTTM computation, and retrospective publishing.
+- **Module**: `src/fsm/incident_fsm.ts`
+- **Objective**: Prevent unpredictable agent actions by enforcing strict mathematical state transitions.
+- **How It Works**:
+  - Implements an asynchronous Finite State Machine governing the incident lifecycle:
+    ```
+    IDLE ──▶ ALERT_DETECTED ──▶ DIAGNOSING ──▶ SANDBOX_REPRODUCING
+                                                        │
+    PR_SUBMITTED ◀── VERIFYING ◀── HEALING ◀────────────┘
+         │
+         └──▶ [FAILED] (Fallback to on-call escalation)
+    ```
+  - Every transition asserts preconditions (e.g. state cannot transition from `DIAGNOSING` to `HEALING` without an approved `DiagnosticReport`).
+  - Records duration and state change metadata for retrospective timeline analysis.
+- **Inputs**: Transition events emitted by the orchestrator.
+- **Outputs**: Immutable state change logs and reactive event callbacks.
+
+### Feature 3: Stack Trace AST Mapping & Forensic Analysis
+
+- **Module**: `src/diagnosis/log_correlator.ts` & `src/diagnosis/ast_mapper.ts`
+- **Objective**: Connect runtime telemetry crashes directly to concrete source code locations in the repository.
+- **How It Works**:
+  - `log_correlator.ts` extracts raw stack traces from alert text, parsing frames into structured tuples: `{ file, line, column, functionName }`.
+  - `ast_mapper.ts` resolves relative paths to absolute monorepo targets, extracts surrounding source code snippets (10 lines before and after), and maps the execution frame to the Abstract Syntax Tree.
+- **Inputs**: Stack trace strings and repository file paths.
+- **Outputs**: `DiagnosticReport` containing parsed frames, target code snippet, and affected symbols.
+
+### Feature 4: Hypothesis Generation Engine
+
+- **Module**: `src/diagnosis/hypothesis_engine.ts`
+- **Objective**: Analyze the correlated failure and formulate prioritized root-cause hypotheses with confidence metrics.
+- **How It Works**:
+  - Evaluates exception patterns (e.g., connection pool starvation, memory leaks, unhandled null pointers, deadlocks).
+  - Synthesizes 3-5 ranked hypotheses explaining _why_ the crash occurred, citing exact lines of code.
+- **Inputs**: `DiagnosticReport` snippet and error message.
+- **Outputs**: Scored hypothesis list attached to the `DiagnosticReport`.
+
+### Feature 5: Ephemeral Sandbox Reproduction & Test Oracle
+
+- **Module**: `src/sandbox/reproduction_spec.ts`, `src/sandbox/sandbox_runner.ts`, `src/sandbox/test_oracle.ts`
+- **Objective**: Guarantee zero-hallucination fixes by reproducing the failure in isolation before attempting any repair.
+- **How It Works**:
+  - `reproduction_spec.ts` compiles an executable reproduction script simulating the exact runtime inputs that triggered the crash.
+  - `sandbox_runner.ts` provisions an isolated execution context (timeout-bounded child process or container), executes the reproduction spec, and captures exit codes, stdout, and stderr.
+  - `test_oracle.ts` verifies that the failure reproduces faithfully (exit code $\neq 0$ or specific error logged).
+- **Inputs**: Reproduction script and target repository environment.
+- **Outputs**: `SandboxResult` verifying whether the failure is actively reproducible.
+
+### Feature 6: Autonomous Patch Synthesis & Self-Correction Feedback Loop
+
+- **Module**: `src/repair/patch_synthesizer.ts` & `src/repair/feedback_loop.ts`
+- **Objective**: Author surgical code repairs and iterate until the sandbox test passes.
+- **How It Works**:
+  - `patch_synthesizer.ts` analyzes the code snippet and diagnosis report to synthesize a unified git diff patch.
+  - `feedback_loop.ts` applies the patch inside the isolated sandbox, then re-runs the reproduction test suite.
+  - If the test passes, the patch is promoted to verification. If it fails, the error output is fed back into the synthesizer for up to 3 iterative self-correction attempts.
+- **Inputs**: Failed reproduction result, code snippet, and hypothesis.
+- **Outputs**: `RepairOutcome` containing the verified `PatchCandidate` or an escalation error.
+
+### Feature 7: Git Automation & PR Publication
+
+- **Module**: `src/repair/git_committer.ts` & `src/postmortem/pr_generator.ts`
+- **Objective**: Package verified fixes into production-ready Git pull requests without human manual branch management.
+- **How It Works**:
+  - Checks out a dedicated remediation branch (`fix/incident-<id>-<timestamp>`).
+  - Writes the verified patch, stages changes, and creates a commit formatted according to Conventional Commits: `fix(<service>): remediate <title>`.
+  - Emits formatted GitHub PR markdown with reproduction evidence and test logs.
+- **Inputs**: `PatchCandidate` and incident metadata.
+- **Outputs**: Created Git branch and published pull request.
+
+### Feature 8: SRE Postmortem Scribe & Timeline Reconstruction
+
+- **Module**: `src/postmortem/timeline_builder.ts`
+- **Objective**: Compile blameless Google SRE-style postmortem documents immediately upon resolution.
+- **How It Works**:
+  - Reconstructs an exact chronological timeline from the FSM state logs.
+  - Computes operational metrics:
+    - **MTTD (Mean Time to Detect)**: Timestamp of failure to alert trigger.
+    - **MTTA (Mean Time to Acknowledge)**: Alert trigger to FSM triage transition.
+    - **MTTM (Mean Time to Mitigate)**: Triage transition to verified sandbox patch.
+  - Outputs a structured Markdown report ready for archiving in the knowledge base.
+- **Inputs**: Incident FSM transition history and `RepairOutcome`.
+- **Outputs**: `PostMortemReport` and persistent markdown document.
 
 ---
 
-## 4. Security & Safety Model
+## 3. How IncidentAI Interacts with the DevLab Multi-Repo Ecosystem
 
-1. **Zero-Hallucination Sandbox Verification**:
-   - AI-generated remediation scripts are NEVER piped directly to production shells.
-   - Scripts are executed inside isolated sandbox containers with resource quotas (CPU/Memory limits) and network boundaries.
-2. **Tiered Authorization Rails**:
-   - **Tier 1 (Read-Only / Safe)**: Cache purges, thread dumps, log extractions — Auto-executed.
-   - **Tier 2 (Low Impact)**: Pod restarts, canary rerouting — Auto-executed with rate-limiting.
-   - **Tier 3 (High Blast Radius)**: Traffic shifts, cluster drain, database rollbacks — Held for human approval token.
-3. **Idempotency Guarantees**:
-   - All mitigation commands must declare idempotency preconditions (e.g. `IF EXISTS`, state checks) to prevent double-execution side-effects during network retries.
+```mermaid
+sequenceDiagram
+    autonumber
+    participant DL as DevLab Logs
+    participant IA as IncidentAI
+    participant DG as DevLab Guard
+    participant DP as DevLab Portal
+    participant OA as OrchestraI / FinAI
+
+    DL->>IA: Push Anomaly / Error Crash Alert
+    Note over IA: Transition: IDLE -> ALERT_DETECTED -> DIAGNOSING
+    IA->>OA: Inspect Codebase & Map AST Frames
+    Note over IA: Transition: DIAGNOSING -> SANDBOX_REPRODUCING
+    IA->>IA: Execute Reproduction Script in Sandbox
+    Note over IA: Transition: SANDBOX_REPRODUCING -> HEALING
+    IA->>IA: Synthesize Candidate Code Patch
+    IA->>DG: Validate Patch against AST Governance Rules (250-line, etc.)
+    DG-->>IA: Governance Pass Confirmed
+    Note over IA: Transition: HEALING -> VERIFYING
+    IA->>IA: Execute Test Oracle in Sandbox
+    alt P1 / High Blast Radius
+        IA->>DP: Request Human Approval Signature
+        DP-->>IA: Cryptographic Token Approved
+    end
+    Note over IA: Transition: VERIFYING -> PR_SUBMITTED
+    IA->>OA: Commit Patch & Open Git Remediation PR
+    IA->>DL: Stream Resolution Telemetry & Metrics
+    IA->>DP: Publish Postmortem & SRE Timeline
+```
+
+### Detailed Ecosystem Interaction Matrix
+
+| Ecosystem Member    |   Direction    | Protocol / Transport                           | Data Payload / Contract                                                                                                 |
+| :------------------ | :------------: | :--------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------- |
+| **`devlab-logs`**   |    Inbound     | HTTP Webhook / Kafka Consumer                  | Streams fatal crash logs, p99 latency spikes, and OOM alerts into `AlertListener`.                                      |
+| **`devlab-guard`**  |    Outbound    | REST API (`http://localhost:8080/api/v1/scan`) | Sends synthesized patches to Guard to verify they do not violate the 250-line limit or comment rules before committing. |
+| **`devlab-portal`** | Bi-directional | REST API (`http://localhost:3010`) & Socket.IO | Sends real-time incident status to the web portal; polls for human authorization tokens on P1 actions.                  |
+| **`orchestrai`**    |    Outbound    | Direct Workspace & gRPC (`:50051`)             | Triages crashes occurring in the orchestrator runtime, repairs agent nodes, and commits git patches.                    |
+| **`finai`**         |    Outbound    | Direct Workspace                               | Intercepts financial transaction errors, tests repairs against the finance engine, and commits patches.                 |
+| **`devlab-shared`** |     Static     | Internal npm package link                      | Consumes `@yuva-devlab/logger`, `@yuva-devlab/errors`, and `@yuva-devlab/regex` for shared contracts.                   |
 
 ---
 
-## 5. Ecosystem Integration
+## 4. Technical Guidelines & Invariants
 
-- **`devlab-logs`**: Supplies streaming error logs, trace spans, and metric deviations via Kafka and DuckDB.
-- **`devlab-portal`**: Renders real-time incident war-room UI, visualizes FSM transitions, and collects human approval signatures.
-- **`devlab-guard`**: Scans auto-generated remediation code against AST governance policies before sandbox execution.
-- **`orchestrai`**: Orchestrates autonomous background agent swarms and cognitive reasoning pipelines.
+### 4.1 Language & Tooling Choices
+
+- **TypeScript 5.8 (Node.js ESM)**:
+  - Selected for strict compile-time type verification across complex incident states.
+  - Zero-transpile rapid execution using `tsx`.
+- **Commander CLI (v13)**:
+  - Standardized enterprise command-line parsing supporting interactive drills and daemon polling.
+- **Zod 3.24**:
+  - Runtime validation guarding against malformed alert streams.
+
+### 4.2 Architectural Standards
+
+1. **Hard 250-Line Maximum Rule**: Every file in `src/` must remain strictly under 250 physical lines.
+2. **Canonical Snake_Case Enums**: All statuses (`idle`, `alert_detected`, `diagnosing`, `p1_critical`) must use strict canonical enum constants.
+3. **Sandbox Isolation Invariant**: No synthesized patch may be committed to a git branch without passing the sandbox reproduction oracle.
+4. **Idempotency**: All remediation actions must be safe to re-execute without creating duplicate side-effects.
+
+---
+
+## 5. Complete Usage Runbook & CLI Reference
+
+### 5.1 Installation & Configuration
+
+```bash
+# Clone the repository
+git clone https://github.com/yuvadevlab/incidentai.git
+cd incidentai
+
+# Install dependencies via pnpm
+pnpm install
+
+# Build CLI binary
+pnpm build
+```
+
+### 5.2 Command Reference
+
+#### 1. Autonomous SRE Fire Drill Demo
+
+Runs an end-to-end simulation of a P1 database timeout outage:
+
+```bash
+pnpm run demo
+# or
+node dist/cli.js demo
+```
+
+#### 2. Specific Incident Scenario Execution
+
+Triggers remediation for a targeted service and failure scenario:
+
+```bash
+node dist/cli.js run --scenario "DB Connection Pool Exhaustion" --service "finai"
+```
+
+#### 3. Continuous Telemetry Stream Monitor
+
+Launches the daemon listener streaming crashes from DevLab Logs:
+
+```bash
+node dist/cli.js watch
+```
+
+### 5.3 Environment Variables Reference
+
+| Variable            | Type   | Default                 | Description                                             |
+| :------------------ | :----- | :---------------------- | :------------------------------------------------------ |
+| `NODE_ENV`          | String | `development`           | Environment mode (`development`, `production`, `test`). |
+| `PORT`              | Number | `8085`                  | HTTP port for incoming alert webhooks.                  |
+| `DEVLAB_LOGS_URL`   | String | `http://localhost:3020` | Ingestion endpoint for DevLab Logs telemetry.           |
+| `DEVLAB_PORTAL_URL` | String | `http://localhost:3010` | Endpoint for DevLab Portal HITL authorization.          |
+| `DEVLAB_GUARD_URL`  | String | `http://localhost:8080` | Endpoint for DevLab Guard AST governance reviews.       |
+| `LOG_LEVEL`         | String | `info`                  | Logging verbosity (`debug`, `info`, `warn`, `error`).   |
