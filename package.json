@@ -1,0 +1,28 @@
+{
+  "name": "incidentai",
+  "version": "1.0.0",
+  "description": "IncidentAI — Autonomous AI Site Reliability Engineer & Self-Healing Incident Commander",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "incidentai": "./dist/cli.js"
+  },
+  "scripts": {
+    "dev": "tsx src/cli.ts",
+    "build": "tsc",
+    "start": "node dist/cli.js",
+    "typecheck": "tsc --noEmit",
+    "demo": "tsx src/cli.ts demo"
+  },
+  "dependencies": {
+    "@yuva-devlab/logger": "link:../devlab-shared/packages/logger",
+    "commander": "^13.1.0",
+    "dotenv": "^16.4.7",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.1",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.2"
+  }
+}
