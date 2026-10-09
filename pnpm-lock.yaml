@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@yuva-devlab/logger':
-        specifier: link:../devlab-shared/packages/logger
-        version: link:../devlab-shared/packages/logger
+        specifier: ^1.2.0
+        version: 1.2.0
       commander:
         specifier: ^13.1.0
         version: 13.1.0
@@ -289,6 +289,9 @@ packages:
 
   '@types/node@24.19.1':
     resolution: {integrity: sha512-aS3/DG0oM05K0RIXXP+hKjinGG5IgSSVGzswZxW3O0sS3pH4/fycXundUC9XsszgKCk4gHXylTEK6hyFxVxnoQ==}
+
+  '@yuva-devlab/logger@1.2.0':
+    resolution: {integrity: sha512-BbJaY1XXX5cYLvf0ExQZXXLdbydV5b3bBHXXxwG+xBx7mZc5eHOlhYZeZ9XWHn92pWeSQpXAPAh9FSSyuxTfng==}
 
   JSONStream@1.3.5:
     resolution: {integrity: sha512-E+iruNOY8VV9s4JEbe1aNEm6MiszPRr/UfcHMz0TQh1BXSxHK+ASV1R6W4HpjBhSeS+54PIsAMCBmwD06LLsqQ==}
@@ -1051,6 +1054,8 @@ snapshots:
   '@types/node@24.19.1':
     dependencies:
       undici-types: 7.24.6
+
+  '@yuva-devlab/logger@1.2.0': {}
 
   JSONStream@1.3.5:
     dependencies:
