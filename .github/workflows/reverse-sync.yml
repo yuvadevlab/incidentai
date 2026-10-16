@@ -1,0 +1,60 @@
+name: 🔄 Reverse Sync (main ➔ dev)
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync-main-to-dev:
+    name: Create Sync PR to dev
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📦 Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.AUTO_PR_PAT || secrets.GITHUB_TOKEN }}
+
+      - name: 🔀 Create or Update Sync PR
+        env:
+          GH_TOKEN: ${{ secrets.AUTO_PR_PAT || secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          if ! git ls-remote --exit-code --heads origin dev > /dev/null 2>&1; then
+            echo "ℹ️ Branch 'dev' does not exist on origin. Creating dev from main..."
+            git push origin origin/main:refs/heads/dev
+          fi
+
+          git fetch origin dev main
+
+          BEHIND_COUNT=$(git rev-list --count origin/dev..origin/main)
+          echo "Commits in main not in dev: $BEHIND_COUNT"
+
+          if [ "$BEHIND_COUNT" -eq 0 ]; then
+            echo "✅ dev is already up to date with main. No PR needed."
+            exit 0
+          fi
+
+          echo "🚀 Pushing main commits to sync/main-to-dev branch..."
+          git checkout -B sync/main-to-dev origin/main
+          git push origin sync/main-to-dev --force
+
+          EXISTING_PR=$(gh pr list --base dev --head sync/main-to-dev --state open --json number -q '.[0].number')
+          if [ -n "$EXISTING_PR" ]; then
+            echo "ℹ️ Pull request #$EXISTING_PR is already open and updated."
+          else
+            echo "📝 Creating new reverse sync pull request..."
+            gh pr create \
+              --base dev \
+              --head sync/main-to-dev \
+              --title "chore(sync): reverse merge main into dev" \
+              --body "Automated PR to sync commits from \`main\` back into \`dev\`."
+          fi
