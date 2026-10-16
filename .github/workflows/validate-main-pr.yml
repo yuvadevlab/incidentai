@@ -1,0 +1,29 @@
+name: 🔒 Validate PR Source Branch
+
+on:
+  pull_request:
+    branches:
+      - main
+    types: [opened, synchronize, reopened]
+
+jobs:
+  verify-source:
+    name: Verify PR Source
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Validate source branch
+        run: |
+          echo "Target: ${{ github.base_ref }}"
+          echo "Source: ${{ github.head_ref }}"
+
+          if [ "${{ github.base_ref }}" != "main" ]; then
+            exit 0
+          fi
+
+          if [ "${{ github.head_ref }}" != "dev" ]; then
+            echo "❌ Only pull requests from 'dev' can be merged into 'main'."
+            exit 1
+          fi
+
+          echo "✅ PR source branch is valid."
