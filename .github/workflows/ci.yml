@@ -1,14 +1,10 @@
 name: 🛡️ CI Pipeline — IncidentAI
 
 on:
-  push:
-    branches:
-      - main
-      - dev
   pull_request:
     branches:
-      - main
       - dev
+      - main
 
 permissions:
   contents: read

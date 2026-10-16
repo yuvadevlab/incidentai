@@ -4,6 +4,7 @@
   "description": "IncidentAI — Autonomous AI Site Reliability Engineer & Self-Healing Incident Commander",
   "private": true,
   "type": "module",
+  "packageManager": "pnpm@12.5.1",
   "bin": {
     "incidentai": "./dist/cli.js"
   },
@@ -24,7 +25,7 @@
     ]
   },
   "dependencies": {
-    "@yuva-devlab/logger": "link:../devlab-shared/packages/logger",
+    "@yuva-devlab/logger": "^1.2.0",
     "commander": "^13.1.0",
     "dotenv": "^16.4.7",
     "zod": "^3.24.2"
