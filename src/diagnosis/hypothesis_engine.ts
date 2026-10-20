@@ -3,8 +3,8 @@
  * Generates structured DiagnosticReport for sandbox reproduction and repair loops.
  */
 
-import type { IncidentAlert, DiagnosticReport, StackFrame } from "../types/index.js";
-import type { MappedSourceContext } from "./ast_mapper.js";
+import type { IncidentAlert, DiagnosticReport, StackFrame } from "../types";
+import type { MappedSourceContext } from "./ast_mapper";
 
 /**
  * AI Root-Cause Hypothesis Generator.

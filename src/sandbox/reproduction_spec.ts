@@ -4,7 +4,7 @@
 
 import fs from "node:fs/promises";
 import path from "node:path";
-import type { DiagnosticReport } from "../types/index.js";
+import type { DiagnosticReport } from "../types";
 
 export interface ReproductionSpec {
   specFile: string;

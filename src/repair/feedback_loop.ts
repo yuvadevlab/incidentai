@@ -3,10 +3,11 @@
  * Feeds compiler errors and failing test assertions back into LLM context until tests pass.
  */
 
-import type { DiagnosticReport, PatchCandidate, RepairOutcome } from "../types/index.js";
-import { PatchSynthesizer } from "./patch_synthesizer.js";
-import { TestOracle } from "../sandbox/test_oracle.js";
-import type { SandboxOptions } from "../sandbox/sandbox_runner.js";
+import type { DiagnosticReport, PatchCandidate, RepairOutcome } from "../types";
+import { PatchSynthesizer } from "./patch_synthesizer";
+import { TestOracle } from "../sandbox/test_oracle";
+import type { SandboxOptions } from "../sandbox/sandbox_runner";
+import { UI_COPY } from "../ui-copy";
 
 export interface FeedbackLoopOptions {
   maxAttempts?: number;
@@ -48,7 +49,7 @@ export class SelfCorrectionFeedbackLoop {
     let lastPatch: PatchCandidate | undefined;
 
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-      console.log(`[SelfCorrection] Initiating repair attempt ${attempt} of ${maxAttempts}...`);
+      console.log(UI_COPY.REPAIR.ATTEMPT(attempt, maxAttempts));
 
       // 1. Synthesize candidate patch with error history
       const candidate = await this.synthesizer.synthesizePatch(report, attempt, previousErrors);
@@ -61,9 +62,7 @@ export class SelfCorrectionFeedbackLoop {
       );
 
       if (verified) {
-        console.log(
-          `[SelfCorrection] Patch attempt ${attempt} VERIFIED successfully with zero regressions.`,
-        );
+        console.log(UI_COPY.REPAIR.VERIFIED(attempt));
         return {
           success: true,
           attempts: attempt,
@@ -73,12 +72,8 @@ export class SelfCorrectionFeedbackLoop {
       }
 
       // 3. Capture failing error output to steer subsequent LLM attempt
-      const failureError =
-        result.stderr.trim() || `Command failed with exit code ${result.exitCode}`;
-      console.warn(
-        `[SelfCorrection] Attempt ${attempt} failed validation:`,
-        failureError.substring(0, 120),
-      );
+      const failureError = result.stderr.trim() || UI_COPY.REPAIR.COMMAND_FAILED(result.exitCode);
+      console.warn(UI_COPY.REPAIR.VALIDATION_FAILED(attempt), failureError.substring(0, 120));
       previousErrors.push(failureError);
     }
 
@@ -87,7 +82,7 @@ export class SelfCorrectionFeedbackLoop {
       success: false,
       attempts: maxAttempts,
       finalPatch: lastPatch,
-      error: `Failed to achieve verified green status after ${maxAttempts} self-correction iterations.`,
+      error: UI_COPY.REPAIR.EXHAUSTED(maxAttempts),
     };
   }
 }

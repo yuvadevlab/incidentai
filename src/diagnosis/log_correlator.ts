@@ -3,7 +3,10 @@
  * Aggregates multi-stream logs by trace_id and extracts stack trace frames.
  */
 
-import type { IncidentAlert, StackFrame } from "../types/index.js";
+import type { IncidentAlert, StackFrame } from "../types";
+import { UI_COPY } from "../ui-copy";
+import { getDevLabLogsUrl } from "../config/service-urls";
+import { getDevLabLogsReadApiKey } from "../config/devlab-logs-auth";
 
 // Regex matching standard V8/Node.js stack trace line: at [func] ([file]:[line]:[col])
 const STACK_FRAME_REGEX =
@@ -21,8 +24,7 @@ export class LogCorrelator {
    * @param telemetryApiUrl DevLab Telemetry base URL
    */
   constructor(telemetryApiUrl?: string) {
-    this.telemetryApiUrl =
-      telemetryApiUrl || process.env.TELEMETRY_API_URL || "http://localhost:3020";
+    this.telemetryApiUrl = getDevLabLogsUrl(telemetryApiUrl);
   }
 
   /**
@@ -42,12 +44,26 @@ export class LogCorrelator {
       timestamp: string;
     }> = [];
     let semanticSummary = alert.message;
+    const readApiKey = getDevLabLogsReadApiKey();
+    if (!readApiKey) {
+      console.warn("DEVLAB_LOGS_READ_API_KEY is required to query DevLab Logs.");
+      return {
+        correlatedLogs,
+        semanticSummary,
+        stackFrames: this.extractStackFrames(alert.message),
+      };
+    }
 
     // 1. Fetch trace-correlated logs if traceId exists
     if (alert.traceId) {
       try {
+        const headers: Record<string, string> = { Accept: "application/json" };
+        if (readApiKey) {
+          headers["Authorization"] = `Bearer ${readApiKey}`;
+        }
         const res = await fetch(
           `${this.telemetryApiUrl}/api/v1/logs?traceId=${encodeURIComponent(alert.traceId)}`,
+          { headers },
         );
         if (res.ok) {
           const data = (await res.json()) as {
@@ -58,15 +74,19 @@ export class LogCorrelator {
           }
         }
       } catch (err) {
-        console.warn("[LogCorrelator] Could not retrieve trace logs:", err);
+        console.warn(UI_COPY.OPERATOR.TRACE_LOGS_FAILED, err);
       }
     }
 
     // 2. Query Log-RAG for semantically similar historical failures
     try {
+      const ragHeaders: Record<string, string> = { "Content-Type": "application/json" };
+      if (readApiKey) {
+        ragHeaders["Authorization"] = `Bearer ${readApiKey}`;
+      }
       const ragRes = await fetch(`${this.telemetryApiUrl}/api/v1/logs/rag-search`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: ragHeaders,
         body: JSON.stringify({ query: alert.message, limit: 3 }),
       });
       if (ragRes.ok) {

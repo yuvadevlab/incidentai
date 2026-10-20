@@ -3,7 +3,10 @@
  * Monitors devlab-logs telemetry stream and health endpoints for error spikes.
  */
 
-import { IncidentSeverity, type IncidentAlert } from "../types/index.js";
+import { IncidentSeverity, type IncidentAlert } from "../types";
+import { UI_COPY } from "../ui-copy";
+import { getDevLabLogsUrl } from "../config/service-urls";
+import { getDevLabLogsReadApiKey } from "../config/devlab-logs-auth";
 
 export type AlertCallback = (alert: IncidentAlert) => Promise<void> | void;
 
@@ -16,6 +19,7 @@ export class AlertListener {
   private pollTimer: NodeJS.Timeout | null = null;
   private readonly listeners: Set<AlertCallback> = new Set();
   private lastSeenLogId: string | null = null;
+  private warnedMissingReadApiKey = false;
 
   /**
    * Initializes alert listener.
@@ -23,8 +27,7 @@ export class AlertListener {
    * @param telemetryApiUrl DevLab Telemetry service base URL
    */
   constructor(telemetryApiUrl?: string) {
-    this.telemetryApiUrl =
-      telemetryApiUrl || process.env.TELEMETRY_API_URL || "http://localhost:3020";
+    this.telemetryApiUrl = getDevLabLogsUrl(telemetryApiUrl);
   }
 
   /**
@@ -43,7 +46,7 @@ export class AlertListener {
       try {
         await listener(alert);
       } catch (err) {
-        console.error("[AlertListener] Error dispatching alert to subscriber:", err);
+        console.error(UI_COPY.OPERATOR.ALERT_SUBSCRIBER_FAILED, err);
       }
     }
   }
@@ -104,7 +107,19 @@ export class AlertListener {
    */
   private async checkTelemetryErrors(): Promise<void> {
     try {
-      const res = await fetch(`${this.telemetryApiUrl}/api/v1/logs?level=error&limit=5`);
+      const readApiKey = getDevLabLogsReadApiKey();
+      if (!readApiKey) {
+        if (!this.warnedMissingReadApiKey) {
+          console.warn("DEVLAB_LOGS_READ_API_KEY is required to poll DevLab Logs.");
+          this.warnedMissingReadApiKey = true;
+        }
+        return;
+      }
+      const headers: Record<string, string> = { Accept: "application/json" };
+      headers["Authorization"] = `Bearer ${readApiKey}`;
+      const res = await fetch(`${this.telemetryApiUrl}/api/v1/logs?level=error&limit=5`, {
+        headers,
+      });
       if (!res.ok) return;
 
       const data = (await res.json()) as {

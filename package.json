@@ -3,15 +3,14 @@
   "version": "1.0.0",
   "description": "IncidentAI — Autonomous AI Site Reliability Engineer & Self-Healing Incident Commander",
   "private": true,
-  "type": "module",
   "packageManager": "pnpm@12.5.1",
   "bin": {
-    "incidentai": "./dist/cli.js"
+    "incidentai": "./dist/cli.mjs"
   },
   "scripts": {
     "dev": "tsx src/cli.ts",
-    "build": "tsc",
-    "start": "node dist/cli.js",
+    "build": "tsup",
+    "start": "node dist/cli.mjs",
     "typecheck": "tsc --noEmit",
     "demo": "tsx src/cli.ts demo",
     "prepare": "husky"
@@ -39,6 +38,7 @@
     "lint-staged": "^15.4.3",
     "prettier": "^3.5.3",
     "tsx": "^4.19.3",
+    "tsup": "^8.5.1",
     "typescript": "^5.8.2"
   }
 }

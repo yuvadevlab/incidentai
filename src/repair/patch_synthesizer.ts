@@ -3,7 +3,7 @@
  * Incorporates iterative compiler and runtime error feedback into conversational prompts.
  */
 
-import type { DiagnosticReport, PatchCandidate } from "../types/index.js";
+import type { DiagnosticReport, PatchCandidate } from "../types";
 
 /**
  * Synthesizes candidate code patches for failing source files.
