@@ -5,7 +5,7 @@
 
 import fs from "node:fs/promises";
 import path from "node:path";
-import type { StackFrame } from "../types/index.js";
+import type { StackFrame } from "../types";
 
 export interface MappedSourceContext {
   targetFile: string;
