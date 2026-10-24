@@ -50,7 +50,7 @@ When outages occur in distributed AI systems or fintech platforms, human on-call
      ┌─────────────────────────┬───────────────┴───────────────┬─────────────────────────┐
      ▼                         ▼                               ▼                         ▼
 [Diagnosis Subsystem]     [Sandbox Runner]            [Automated Repair Engine] [Postmortem Scribe]
- • Log Correlator (:3020)  • Ephemeral Docker Sandbox  • Code Patch Synthesis    • 5 Whys Analysis
+ • Log Correlator (:4003)  • Ephemeral Docker Sandbox  • Code Patch Synthesis    • 5 Whys Analysis
  • Git Commit Diff Inspector• Safe Fault Reproduction  • Automated Branch PR     • Action Item Tracker
  • Stack Trace De-obfuscate• Zero Production Leakage   • Regression Test Run     • Markdown Report Export
 ```
@@ -72,7 +72,7 @@ When outages occur in distributed AI systems or fintech platforms, human on-call
 #### 2. Root-Cause Diagnosis Subsystem (`src/diagnosis`)
 
 - **Detailed Features**:
-  - Automatically queries DevLab Logs (`:3020`) for all log lines sharing the incident's `traceId`.
+  - Automatically queries DevLab Logs (`:4003`, Prod: `:4013`) for all log lines sharing the incident's `traceId`.
   - Analyzes git history using `git log --since` to correlate recent code deployments with error onset.
   - Uses AI reasoning models to identify the exact line of code and logical error causing the failure.
 
@@ -108,12 +108,12 @@ When outages occur in distributed AI systems or fintech platforms, human on-call
 sequenceDiagram
     autonumber
     participant App as Monorepo App (orchestrai / finai)
-    participant Logs as DevLab Logs (:3020)
+    participant Logs as DevLab Logs (:4003)
     participant IA as IncidentAI (:8085)
     participant Sandbox as Docker Sandbox
     participant Git as GitHub / Git Branch
 
-    App->>Logs: 1. Stream Unhandled Error Stack Trace (:3020)
+    App->>Logs: 1. Stream Unhandled Error Stack Trace (:4003)
     Logs->>IA: 2. Dispatch Incident Alert Webhook (:8085)
     IA->>IA: 3. Transition FSM: DETECTED -> TRIAGING -> DIAGNOSING
     IA->>Logs: 4. Query Historical Logs for traceId
@@ -132,14 +132,14 @@ sequenceDiagram
 
 ### 3.1 Inter-Repository Integration Matrix
 
-| Ecosystem Member    | Direction | Protocol & Transport   | Purpose & Operational Behavior                                                                    |
-| :------------------ | :-------: | :--------------------- | :------------------------------------------------------------------------------------------------ |
-| **`devlab-logs`**   |  Inbound  | HTTP/2 REST (`:3020`)  | Queries correlated trace logs and historical telemetry during automated root-cause diagnosis.     |
-| **`orchestrai`**    |  Inbound  | HTTP Webhook (`:8085`) | Receives crash alerts, worker timeouts, and tool sandbox exceptions for automated triage.         |
-| **`finai`**         |  Inbound  | HTTP Webhook (`:8085`) | Receives banking sync exceptions and ledger invariant violations for immediate SRE investigation. |
-| **`devlab-portal`** |  Inbound  | HTTP Webhook (`:8085`) | Monitors control plane health and alert drops.                                                    |
-| **`devlab-guard`**  |  Inbound  | CLI Git Pre-commit     | Enforces the 250-line rule, strict enums, and code quality before commit.                         |
-| **`devlab-shared`** |  Static   | npm Package Imports    | Consumes `@yuva-devlab/errors`, `@yuva-devlab/resilience`, and `@yuva-devlab/logger`.             |
+| Ecosystem Member    | Direction | Protocol & Transport                | Purpose & Operational Behavior                                                                    |
+| :------------------ | :-------: | :---------------------------------- | :------------------------------------------------------------------------------------------------ |
+| **`devlab-logs`**   |  Inbound  | HTTP REST (`:4003` / Prod: `:4013`) | Queries correlated trace logs and historical telemetry during automated root-cause diagnosis.     |
+| **`orchestrai`**    |  Inbound  | HTTP Webhook (`:8085`)              | Receives crash alerts, worker timeouts, and tool sandbox exceptions for automated triage.         |
+| **`finai`**         |  Inbound  | HTTP Webhook (`:8085`)              | Receives banking sync exceptions and ledger invariant violations for immediate SRE investigation. |
+| **`devlab-portal`** |  Inbound  | HTTP Webhook (`:8085`)              | Monitors control plane health and alert drops.                                                    |
+| **`devlab-guard`**  |  Inbound  | CLI Git Pre-commit                  | Enforces the 250-line rule, strict enums, and code quality before commit.                         |
+| **`devlab-shared`** |  Static   | npm Package Imports                 | Consumes `@yuva-devlab/errors`, `@yuva-devlab/resilience`, and `@yuva-devlab/logger`.             |
 
 ---
 
@@ -179,11 +179,11 @@ pnpm build
 
 ### 5.2 Complete Environment Variables Reference
 
-| Variable          |  Type  |            Default            | Required | Description                                         |
-| :---------------- | :----: | :---------------------------: | :------: | :-------------------------------------------------- |
-| `PORT`            | Number |            `8085`             |   Yes    | Webhook receiver HTTP port.                         |
-| `DEVLAB_LOGS_URL` | String |    `http://localhost:3020`    |   Yes    | DevLab Logs ingestion endpoint for querying traces. |
-| `DOCKER_HOST`     | String | `unix:///var/run/docker.sock` |    No    | Docker daemon socket for sandbox reproduction.      |
+| Variable          |  Type  |                            Default                             | Required | Description                                         |
+| :---------------- | :----: | :------------------------------------------------------------: | :------: | :-------------------------------------------------- |
+| `PORT`            | Number |                             `8085`                             |   Yes    | Webhook receiver HTTP port.                         |
+| `DEVLAB_LOGS_URL` | String | `http://localhost:4003` (dev) / `http://localhost:4013` (prod) |   Yes    | DevLab Logs ingestion endpoint for querying traces. |
+| `DOCKER_HOST`     | String |                 `unix:///var/run/docker.sock`                  |    No    | Docker daemon socket for sandbox reproduction.      |
 
 ### 5.3 Simulating an Incident via Webhook Example
 
