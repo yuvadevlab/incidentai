@@ -4,7 +4,8 @@
  * IDLE -> ALERT_DETECTED -> DIAGNOSING -> SANDBOX_REPRODUCING -> HEALING -> VERIFYING -> PR_SUBMITTED
  */
 
-import { IncidentState } from "../types/index.js";
+import { IncidentState } from "../types";
+import { UI_COPY } from "../ui-copy";
 
 export interface StateTransitionEvent {
   incidentId: string;
@@ -97,7 +98,7 @@ export class IncidentFSM {
       try {
         listener(event);
       } catch (err) {
-        console.error("[IncidentFSM] Subscriber error during transition:", err);
+        console.error(UI_COPY.OPERATOR.TRANSITION_SUBSCRIBER_FAILED, err);
       }
     }
   }

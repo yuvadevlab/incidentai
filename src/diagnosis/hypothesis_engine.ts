@@ -3,8 +3,8 @@
  * Generates structured DiagnosticReport for sandbox reproduction and repair loops.
  */
 
-import type { IncidentAlert, DiagnosticReport, StackFrame } from "../types/index.js";
-import type { MappedSourceContext } from "./ast_mapper.js";
+import type { IncidentAlert, DiagnosticReport, StackFrame } from "../types";
+import type { MappedSourceContext } from "./ast_mapper";
 
 /**
  * AI Root-Cause Hypothesis Generator.
@@ -20,7 +20,7 @@ export class HypothesisEngine {
    * @param model Reasoning model identifier
    */
   constructor(ollamaUrl?: string, model?: string) {
-    this.ollamaUrl = ollamaUrl || process.env.OLLAMA_URL || "http://localhost:11434";
+    this.ollamaUrl = ollamaUrl || process.env.OLLAMA_BASE_URL || "http://localhost:11434";
     this.model = model || process.env.REASONING_MODEL || "qwen3:8b";
   }
 

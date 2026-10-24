@@ -3,7 +3,7 @@
  * Incorporates iterative compiler and runtime error feedback into conversational prompts.
  */
 
-import type { DiagnosticReport, PatchCandidate } from "../types/index.js";
+import type { DiagnosticReport, PatchCandidate } from "../types";
 
 /**
  * Synthesizes candidate code patches for failing source files.
@@ -19,7 +19,7 @@ export class PatchSynthesizer {
    * @param model Coding model identifier
    */
   constructor(ollamaUrl?: string, model?: string) {
-    this.ollamaUrl = ollamaUrl || process.env.OLLAMA_URL || "http://localhost:11434";
+    this.ollamaUrl = ollamaUrl || process.env.OLLAMA_BASE_URL || "http://localhost:11434";
     this.model = model || process.env.CODE_MODEL || "qwen3:8b";
   }
 

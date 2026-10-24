@@ -5,7 +5,8 @@
 
 import { exec } from "node:child_process";
 import { promisify } from "node:util";
-import type { PatchCandidate } from "../types/index.js";
+import type { PatchCandidate } from "../types";
+import { UI_COPY } from "../ui-copy";
 
 const execAsync = promisify(exec);
 
@@ -59,7 +60,7 @@ export class GitCommitter {
         success: true,
       };
     } catch (err) {
-      console.warn("[GitCommitter] Git operation warning:", err);
+      console.warn(UI_COPY.OPERATOR.GIT_WARNING, err);
       return {
         branch: branchName,
         commitHash: `simulated-sha-${Date.now().toString(16)}`,

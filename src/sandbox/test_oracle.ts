@@ -2,8 +2,8 @@
  * Test Oracle validating bug reproduction and patch verification.
  */
 
-import type { SandboxResult } from "../types/index.js";
-import { SandboxRunner, type SandboxOptions } from "./sandbox_runner.js";
+import type { SandboxResult } from "../types";
+import { SandboxRunner, type SandboxOptions } from "./sandbox_runner";
 
 /**
  * Validates execution assertions before and after patch application.

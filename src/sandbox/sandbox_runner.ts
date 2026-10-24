@@ -6,7 +6,7 @@
 import { spawn } from "node:child_process";
 import fs from "node:fs/promises";
 import path from "node:path";
-import type { SandboxResult } from "../types/index.js";
+import type { SandboxResult } from "../types";
 
 export interface SandboxOptions {
   cwd?: string;

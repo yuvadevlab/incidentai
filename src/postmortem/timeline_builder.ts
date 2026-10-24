@@ -2,7 +2,7 @@
  * Incident Timeline Builder computing relative chronological milestones.
  */
 
-import type { StateTransitionEvent } from "../fsm/incident_fsm.js";
+import type { StateTransitionEvent } from "../fsm/incident_fsm";
 
 export interface TimelineEntry {
   offset: string;
