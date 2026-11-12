@@ -3,7 +3,13 @@
  * Monitors devlab-logs telemetry stream and health endpoints for error spikes.
  */
 
-import { IncidentSeverity, type IncidentAlert } from "../types";
+import {
+  IncidentSeverity,
+  type IncidentAlert,
+  TelemetryQueryParamKey,
+  HttpHeader,
+  TelemetryApiRoute,
+} from "../types";
 import { UI_COPY } from "../ui-copy";
 import { getDevLabLogsUrl } from "../config/service-urls";
 import { getDevLabLogsReadApiKey } from "../config/devlab-logs-auth";
@@ -115,9 +121,12 @@ export class AlertListener {
         }
         return;
       }
-      const headers: Record<string, string> = { Accept: "application/json" };
-      headers["Authorization"] = `Bearer ${readApiKey}`;
-      const res = await fetch(`${this.telemetryApiUrl}/api/v1/logs?level=error&limit=5`, {
+      const headers: Record<string, string> = { [HttpHeader.ACCEPT]: "application/json" };
+      headers[HttpHeader.AUTHORIZATION] = `Bearer ${readApiKey}`;
+      const requestUrl = new URL(TelemetryApiRoute.LOGS, this.telemetryApiUrl);
+      requestUrl.searchParams.set(TelemetryQueryParamKey.LEVEL, "error");
+      requestUrl.searchParams.set(TelemetryQueryParamKey.LIMIT, "5");
+      const res = await fetch(requestUrl.toString(), {
         headers,
       });
       if (!res.ok) return;

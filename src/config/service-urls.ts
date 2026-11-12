@@ -5,5 +5,5 @@
  * @returns The configured DevLab Logs service URL
  */
 export function getDevLabLogsUrl(override?: string): string {
-  return override ?? process.env.DEVLAB_LOGS_URL ?? "http://localhost:3020";
+  return override ?? process.env.DEVLAB_LOGS_URL ?? "http://localhost:4003";
 }
