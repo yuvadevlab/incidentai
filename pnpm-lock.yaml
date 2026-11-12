@@ -167,8 +167,8 @@ importers:
   .:
     dependencies:
       '@yuva-devlab/logger':
-        specifier: ^1.2.0
-        version: 1.2.0
+        specifier: ^1.3.1
+        version: 1.3.1
       commander:
         specifier: ^13.1.0
         version: 13.1.0
@@ -768,8 +768,8 @@ packages:
   '@types/node@24.19.1':
     resolution: {integrity: sha512-aS3/DG0oM05K0RIXXP+hKjinGG5IgSSVGzswZxW3O0sS3pH4/fycXundUC9XsszgKCk4gHXylTEK6hyFxVxnoQ==}
 
-  '@yuva-devlab/logger@1.2.0':
-    resolution: {integrity: sha512-BbJaY1XXX5cYLvf0ExQZXXLdbydV5b3bBHXXxwG+xBx7mZc5eHOlhYZeZ9XWHn92pWeSQpXAPAh9FSSyuxTfng==}
+  '@yuva-devlab/logger@1.3.1':
+    resolution: {integrity: sha512-cppWT5HUoIi6cZG6zhJC0HhEFjbdZyz5014cT24WP9hbDcNF0Be4VcI9A7Z4QbJFMlhSHkQxQzXt6k2ZRlR2OQ==}
 
   JSONStream@1.3.5:
     resolution: {integrity: sha512-E+iruNOY8VV9s4JEbe1aNEm6MiszPRr/UfcHMz0TQh1BXSxHK+ASV1R6W4HpjBhSeS+54PIsAMCBmwD06LLsqQ==}
@@ -1869,7 +1869,7 @@ snapshots:
     dependencies:
       undici-types: 7.24.6
 
-  '@yuva-devlab/logger@1.2.0': {}
+  '@yuva-devlab/logger@1.3.1': {}
 
   JSONStream@1.3.5:
     dependencies:

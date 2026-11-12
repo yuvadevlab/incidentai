@@ -8,14 +8,16 @@ import { Command } from "commander";
 import dotenv from "dotenv";
 import { IncidentAIOrchestrator } from ".";
 import { AlertListener } from "./fsm/alert_listener";
+import { startHealthServer } from "./server/health_server";
 import { IncidentSeverity, type IncidentAlert } from "./types";
 import { UI_COPY } from "./ui-copy";
+import { INCIDENTAI_VERSION } from "./version";
 
 dotenv.config();
 
 const program = new Command();
 
-program.name("incidentai").description(UI_COPY.CLI.DESCRIPTION).version("1.0.0");
+program.name("incidentai").description(UI_COPY.CLI.DESCRIPTION).version(INCIDENTAI_VERSION);
 
 program
   .command("demo")
@@ -57,10 +59,11 @@ program
   });
 
 program
-  .command("watch")
+  .command("watch", { isDefault: true })
   .description(UI_COPY.CLI.WATCH_DESCRIPTION)
   .action(() => {
     console.log(UI_COPY.CLI.WATCH_START);
+    const healthServer = startHealthServer();
     const orchestrator = new IncidentAIOrchestrator();
     const listener = new AlertListener();
 
@@ -74,6 +77,7 @@ program
     process.on("SIGINT", () => {
       console.log(UI_COPY.CLI.WATCH_STOP);
       listener.stopPolling();
+      healthServer.close();
       process.exit(0);
     });
   });

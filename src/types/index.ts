@@ -30,6 +30,32 @@ export enum IncidentSeverity {
 }
 
 /**
+ * URL Query parameter keys for telemetry and API endpoints.
+ */
+export enum TelemetryQueryParamKey {
+  LEVEL = "level",
+  LIMIT = "limit",
+  TRACE_ID = "traceId",
+}
+
+/**
+ * Canonical HTTP headers.
+ */
+export enum HttpHeader {
+  ACCEPT = "Accept",
+  AUTHORIZATION = "Authorization",
+  CONTENT_TYPE = "Content-Type",
+}
+
+/**
+ * Standard Telemetry API routes.
+ */
+export enum TelemetryApiRoute {
+  LOGS = "/api/v1/logs",
+  RAG_SEARCH = "/api/v1/logs/rag-search",
+}
+
+/**
  * Alert schema emitted by health monitors or log anomaly detectors.
  */
 export const IncidentAlertSchema = z.object({

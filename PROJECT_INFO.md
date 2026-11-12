@@ -33,7 +33,7 @@ When outages occur in distributed AI systems or fintech platforms, human on-call
 ┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐
 │                                   INCIDENTAI PLATFORM TOPOLOGY                                         │
 └────────────────────────────────────────────────────────────────────────────────────────────────────────┘
-          [Webhook Ingress (:8085)]               [SRE CLI: incidentai triage]
+          [Webhook Ingress (:8001)]               [SRE CLI: incidentai triage]
                       │                                        │
                       └───────────────────┬────────────────────┘
                                           ▼
@@ -95,7 +95,7 @@ When outages occur in distributed AI systems or fintech platforms, human on-call
   - Automatically writes a comprehensive, blameless postmortem markdown file.
   - Includes: Incident Summary, Impact Metrics (Downtime, affected tenants), Chronological Timeline, Root Cause Analysis, 5 Whys, and Preventative Action Items.
 
-#### 6. Webhook Ingestion Service (`src/index.ts` — Port `8085`)
+#### 6. Webhook Ingestion Service (`src/index.ts` — Port `8001` / Prod `8011`)
 
 - **Technology Stack**: Fastify v4, TypeScript Node ESM.
 - **Purpose**: Listens for error alerts and exceptions dispatched by `orchestrai`, `finai`, `devlab-portal`, or `devlab-logs`.
@@ -109,12 +109,12 @@ sequenceDiagram
     autonumber
     participant App as Monorepo App (orchestrai / finai)
     participant Logs as DevLab Logs (:4003)
-    participant IA as IncidentAI (:8085)
+    participant IA as IncidentAI (:8001)
     participant Sandbox as Docker Sandbox
     participant Git as GitHub / Git Branch
 
     App->>Logs: 1. Stream Unhandled Error Stack Trace (:4003)
-    Logs->>IA: 2. Dispatch Incident Alert Webhook (:8085)
+    Logs->>IA: 2. Dispatch Incident Alert Webhook (:8001)
     IA->>IA: 3. Transition FSM: DETECTED -> TRIAGING -> DIAGNOSING
     IA->>Logs: 4. Query Historical Logs for traceId
     Logs-->>IA: Return 200 Correlated Log Events
@@ -135,9 +135,9 @@ sequenceDiagram
 | Ecosystem Member    | Direction | Protocol & Transport                | Purpose & Operational Behavior                                                                    |
 | :------------------ | :-------: | :---------------------------------- | :------------------------------------------------------------------------------------------------ |
 | **`devlab-logs`**   |  Inbound  | HTTP REST (`:4003` / Prod: `:4013`) | Queries correlated trace logs and historical telemetry during automated root-cause diagnosis.     |
-| **`orchestrai`**    |  Inbound  | HTTP Webhook (`:8085`)              | Receives crash alerts, worker timeouts, and tool sandbox exceptions for automated triage.         |
-| **`finai`**         |  Inbound  | HTTP Webhook (`:8085`)              | Receives banking sync exceptions and ledger invariant violations for immediate SRE investigation. |
-| **`devlab-portal`** |  Inbound  | HTTP Webhook (`:8085`)              | Monitors control plane health and alert drops.                                                    |
+| **`orchestrai`**    |  Inbound  | HTTP Webhook (`:8001`)              | Receives crash alerts, worker timeouts, and tool sandbox exceptions for automated triage.         |
+| **`finai`**         |  Inbound  | HTTP Webhook (`:8001`)              | Receives banking sync exceptions and ledger invariant violations for immediate SRE investigation. |
+| **`devlab-portal`** |  Inbound  | HTTP Webhook (`:8001`)              | Monitors control plane health and alert drops.                                                    |
 | **`devlab-guard`**  |  Inbound  | CLI Git Pre-commit                  | Enforces the 250-line rule, strict enums, and code quality before commit.                         |
 | **`devlab-shared`** |  Static   | npm Package Imports                 | Consumes `@yuva-devlab/errors`, `@yuva-devlab/resilience`, and `@yuva-devlab/logger`.             |
 
@@ -170,7 +170,7 @@ cd incidentai
 # Install dependencies
 pnpm install
 
-# Start Webhook Receiver in development mode (:8085)
+# Start Webhook Receiver in development mode (:8001)
 pnpm dev
 
 # Build the project
@@ -181,14 +181,14 @@ pnpm build
 
 | Variable          |  Type  |                            Default                             | Required | Description                                         |
 | :---------------- | :----: | :------------------------------------------------------------: | :------: | :-------------------------------------------------- |
-| `PORT`            | Number |                             `8085`                             |   Yes    | Webhook receiver HTTP port.                         |
+| `PORT`            | Number |                             `8001`                             |   Yes    | Webhook receiver HTTP port (Prod: `8011`).          |
 | `DEVLAB_LOGS_URL` | String | `http://localhost:4003` (dev) / `http://localhost:4013` (prod) |   Yes    | DevLab Logs ingestion endpoint for querying traces. |
 | `DOCKER_HOST`     | String |                 `unix:///var/run/docker.sock`                  |    No    | Docker daemon socket for sandbox reproduction.      |
 
 ### 5.3 Simulating an Incident via Webhook Example
 
 ```bash
-curl -X POST http://localhost:8085/api/v1/incidents/webhook \
+curl -X POST http://localhost:8001/api/v1/incidents/webhook \
   -H "Content-Type: application/json" \
   -d '{
     "service": "orchestrai-worker",
