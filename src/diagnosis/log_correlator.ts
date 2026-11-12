@@ -3,7 +3,13 @@
  * Aggregates multi-stream logs by trace_id and extracts stack trace frames.
  */
 
-import type { IncidentAlert, StackFrame } from "../types";
+import {
+  type IncidentAlert,
+  type StackFrame,
+  TelemetryQueryParamKey,
+  HttpHeader,
+  TelemetryApiRoute,
+} from "../types";
 import { UI_COPY } from "../ui-copy";
 import { getDevLabLogsUrl } from "../config/service-urls";
 import { getDevLabLogsReadApiKey } from "../config/devlab-logs-auth";
@@ -57,14 +63,13 @@ export class LogCorrelator {
     // 1. Fetch trace-correlated logs if traceId exists
     if (alert.traceId) {
       try {
-        const headers: Record<string, string> = { Accept: "application/json" };
+        const headers: Record<string, string> = { [HttpHeader.ACCEPT]: "application/json" };
         if (readApiKey) {
-          headers["Authorization"] = `Bearer ${readApiKey}`;
+          headers[HttpHeader.AUTHORIZATION] = `Bearer ${readApiKey}`;
         }
-        const res = await fetch(
-          `${this.telemetryApiUrl}/api/v1/logs?traceId=${encodeURIComponent(alert.traceId)}`,
-          { headers },
-        );
+        const requestUrl = new URL(TelemetryApiRoute.LOGS, this.telemetryApiUrl);
+        requestUrl.searchParams.set(TelemetryQueryParamKey.TRACE_ID, alert.traceId);
+        const res = await fetch(requestUrl.toString(), { headers });
         if (res.ok) {
           const data = (await res.json()) as {
             logs?: Array<{ id: string; service: string; message: string; timestamp: string }>;
@@ -80,11 +85,12 @@ export class LogCorrelator {
 
     // 2. Query Log-RAG for semantically similar historical failures
     try {
-      const ragHeaders: Record<string, string> = { "Content-Type": "application/json" };
+      const ragHeaders: Record<string, string> = { [HttpHeader.CONTENT_TYPE]: "application/json" };
       if (readApiKey) {
-        ragHeaders["Authorization"] = `Bearer ${readApiKey}`;
+        ragHeaders[HttpHeader.AUTHORIZATION] = `Bearer ${readApiKey}`;
       }
-      const ragRes = await fetch(`${this.telemetryApiUrl}/api/v1/logs/rag-search`, {
+      const ragUrl = new URL(TelemetryApiRoute.RAG_SEARCH, this.telemetryApiUrl);
+      const ragRes = await fetch(ragUrl.toString(), {
         method: "POST",
         headers: ragHeaders,
         body: JSON.stringify({ query: alert.message, limit: 3 }),
